@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRENACIONAL</title>
+    <!-- ====== CSS Files ====== -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+    <header>
+        <ul class="navigation scrolled">
+            <li><a href="#"><ion-icon name="home-sharp"></ion-icon>INICIO</a></li>
+            <li>
+                <a href="#">DISCIPLINAS<ion-icon name="caret-down"></ion-icon></a>
+                <ul class="subdiscipline"></ul>
+            </li>
+        </ul>
+
+        <div class="content">
+            <div class="discipline">
+                <h3 class="type">Básquetbol</h3>
+            </div>
+
+            <div class="pics">
+                <div class="teamsM active" data-category="male">
+                    <img src="/frontend/assets/images/Basquet_F.webp" alt="Básquetbol Varonil" class="teamM">
+                </div>
+
+                <div class="teamsF" data-category="female">
+                    <img src="/frontend/assets/images/Basquet_F.webp" alt="Básquetbol Femenil" class="teamF">
+                </div>
+            </div>
+    
+            <div class="rules">
+                <h1>descarga aquí el</h1>
+                <div class="box">
+                    <h2 class="program">REGLAMENTO Y PROGRAMA GENERAL</h2>
+                </div>
+            </div>
+        </div>        
+    </header>
+
+    <div class="tecs">
+        <img src="/frontend/assets/images/Puruandiro.webp" alt="Puruandiro">                
+        <img src="/frontend/assets/images/Piedad.webp" alt="Piedad" class="piedad">
+        <img src="/frontend/assets/images/Morelia.webp" alt="Morelia">
+        <img src="/frontend/assets/images/Valle_Morelia.webp" alt="Valle_Morelia">
+        <img src="/frontend/assets/images/Zitacuaro.webp" alt="Zitacuaro">
+        <img src="/frontend/assets/images/ITJ.webp" alt="ITJ">
+        <img src="/frontend/assets/images/Zamora.webp" alt="Zamora">
+        <img src="/frontend/assets/images/Apatzingan.webp" alt="Apatzingan">
+        <img src="/frontend/assets/images/Reyes.webp" alt="Reyes">
+        <img src="/frontend/assets/images/Jilotepec.webp" alt="Jilotepec">
+        <img src="/frontend/assets/images/Uruapan.webp" alt="Uruapan">        
+        <img src="/frontend/assets/images/Purhepecha.webp" alt="Purhepecha">
+    </div>
+
+    <div class="groups"> 
+        <div class="icon">
+            <img src="/frontend/assets/images/Icon_BV.webp" 
+                alt="Básquetbol"
+                data-changeable="icon"
+                data-male-src="/frontend/assets/images/Icon_BV.webp"
+                data-female-src="/frontend/assets/images/Icon_BF.webp">
+        </div>   
+
+        <div class="info">
+            <h3 data-changeable="title"
+                data-male-text="VARONIL"
+                data-female-text="FEMENIL">VARONIL</h3>
+
+            <div class="group">
+                <div class="lblGroup">   
+                    <h1>Grupo A</h1>                 
+                </div>
+
+                <div class="next">
+                    <ion-icon name="chevron-forward-outline"></ion-icon>
+                </div>
+            </div>           
+        </div>  
+    </div>
+
+    <div class="sedes">
+        <div class="sedesInfo">
+            <div class="sedesTitles">
+                <h3>SEDES</h3>                
+            </div>
+            
+            <div class="sedesOptions">
+                <p>HOSPITALES</p>
+                <div class="first"></div>                
+                <p>HOTELES</p>
+            </div>
+        </div>        
+    </div>
+    
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="assets/js/conection.js"></script>
+</body>
+</html>
