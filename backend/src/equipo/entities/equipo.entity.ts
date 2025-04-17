@@ -3,5 +3,5 @@ export class Equipo {
     public nombre: string;
     public ciudad: string;
     public diciplinaid: number;
-    
+    public grupoid: number;
 }

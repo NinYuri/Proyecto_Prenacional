@@ -36,15 +36,19 @@ model canchas {
 
   partidos   partidos[]  // Relación inversa
 }
+
 model equipos {
   id_equipo           Int             @id @default(autoincrement())
   nombre              String?
   ciudad              String
   diciplinaid         Int
+  grupoid             Int
 
   // Relaciones
   partidos_local      partidos[]       @relation("equipo_local")
   partidos_visitante  partidos[]       @relation("equipo_visitante")
+
+  grupos              grupos     @relation(fields: [grupoid], references: [id_grupo], onDelete: Cascade)
 
   equipo1             rolDeJuegos[]   @relation("equipo1")
   equipo2             rolDeJuegos[]   @relation("equipo2")
@@ -167,10 +171,11 @@ model partidos {
   id_grupo            Int @id @default(autoincrement())
   nombre              String
   disciplinaid        Int
+  
   // Relaciones
   diciplinas         diciplinas @relation(fields: [disciplinaid], references: [id_diciplinas], onDelete: Cascade)
   usuarios           usuarios[]
-
+  equipos            equipos[]
  }
 
 model roles{

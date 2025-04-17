@@ -9,5 +9,8 @@ export class CreateEquipoDto {
     @IsNumber()
     @Type(() => Number)
     public diciplinaid: number;
+    @IsNumber()
+    @Type(() => Number)
+    public grupoid: number;
 }
    
