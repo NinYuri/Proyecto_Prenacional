@@ -197,37 +197,17 @@ document.querySelectorAll('.teamsM, .teamsF').forEach(container => {
         console.log('ID de disciplina:', disciplineId);  
         if(!disciplineId) return;
 
-        // Actualizar grupos
-        fetchGroups().then(groups => {
-            currentGroups = groups.filter(g => g.disciplinaid === disciplineId);
-            currentGroupIndex = 0;
-            updateGroupNavigation();
-        });
+        // Actualizar grupos y equipos
+        const groups = await fetchGroups();
+        currentGroups = groups.filter(g => g.disciplinaid === disciplineId);
+        console.log('Grupos filtrados:', currentGroups);
+        currentGroupIndex = 0;
+        updateGroupNavigation(); // Actualiza la UI inmediatamente
+        const teams = await getTeamsByGroup(currentGroups[currentGroupIndex]?.id_grupo);
+        console.log('Equipos del grupo: ', teams);
+        await renderTeams(teams);
     });
 });
-
-async function getDisciplineId(category) {
-    try {
-        // Obtener nombre de la disciplina desde el HTML
-        const disciplineName = document.querySelector('.type').textContent.trim();
-        
-        // Fetch a endpoint de disciplinas
-        const response = await fetch('http://localhost:3000/api/disciplinas');
-        const disciplines = await response.json();
-        
-        // Buscar coincidencia exacta
-        const discipline = disciplines.find(d => 
-            d.nombre === disciplineName && 
-            d.categoria.toLowerCase() === (category === 'male' ? 'varonil' : 'femenil')
-        );
-
-        return discipline?.id_diciplinas || null;
-        
-    } catch (error) {
-        console.error('Error obteniendo disciplina:', error);
-        return null;
-    }
-}
 
 /* =================== actualización de contenido =================== */
 function updateContent(category) {
@@ -254,18 +234,24 @@ function updateCategoryDisplay(category) {
 
 /* =================== NAVEGACIÓN DE GRUPOS =================== */
 function setupNavigationControls() {
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
         const nextBtn = e.target.closest('.next');
         const prevBtn = e.target.closest('.prev');
         
         if(nextBtn && currentGroupIndex < currentGroups.length - 1) {
             currentGroupIndex++;
             updateGroupNavigation();
+            const teams = await getTeamsByGroup(currentGroups[currentGroupIndex]?.id_grupo);
+            console.log('Equipos del grupo: ', teams);
+            await renderTeams(teams);
         }
         
         if(prevBtn && currentGroupIndex > 0) {
             currentGroupIndex--;
             updateGroupNavigation();
+            const teams = await getTeamsByGroup(currentGroups[currentGroupIndex]?.id_grupo);
+            console.log('Equipos del grupo: ', teams);
+            await renderTeams(teams);
         }
     });
 }
@@ -276,11 +262,16 @@ function updateGroupNavigation() {
     const nextArrow = document.querySelector('.next');
 
     if(currentGroups.length === 0) {
-        groupName.textContent = 'Cargando grupos...';
+        groupName.textContent = 'No hay grupos disponibles';
+        prevArrow.style.display = 'none';
+        nextArrow.style.display = 'none';
         return;
     }
 
-    groupName.textContent = currentGroups[currentGroupIndex]?.nombre || 'Sin grupos';
+    const currentGroup = currentGroups[currentGroupIndex];
+    groupName.textContent = currentGroup?.nombre || 'Grupo desconocido';
+    
+    // Control de flechas
     prevArrow.style.display = currentGroupIndex > 0 ? 'flex' : 'none';
     nextArrow.style.display = currentGroupIndex < currentGroups.length - 1 ? 'flex' : 'none';
 }
@@ -301,7 +292,73 @@ function resetAnimations() {
     }
 }
 
-/* =================== api =================== */
+/* =================== NAVEGACIÓN DE EQUIPOS =================== */
+async function renderTeams(teams) {
+    const cityImages = {
+        'Jiquilpan': '/frontend/assets/images/ITJ.webp',
+        'La Piedad': '/frontend/assets/images/Piedad.webp',
+        'Morelia': '/frontend/assets/images/Morelia.webp',
+        'Valle de Morelia': '/frontend/assets/images/Valle_Morelia.webp',
+        'Zitácuaro': '/frontend/assets/images/Zitacuaro.webp',
+        'Zamora': '/frontend/assets/images/Zamora.webp',
+        'Apatzingán': '/frontend/assets/images/Apatzingan.webp',
+        'Los Reyes': '/frontend/assets/images/Reyes.webp',
+        'Purhépecha': '/frontend/assets/images/Purhepecha.webp',
+        'Puruándiro': '/frontend/assets/images/Puruandiro.webp',
+        'Uruapan': '/frontend/assets/images/Uruapan.webp',
+        'Jilotepec': '/frontend/assets/images/Jilotepec.webp'
+    };
+
+    const container = document.querySelector('.points');    
+    
+    // Limpiar contenido existente
+    const existingTeams = container.querySelectorAll('.sections.teams:not(.titlePoints)');
+    existingTeams.forEach(team => team.remove());
+
+    for(const team of teams) {
+        const teamCity = (team.ciudad || '').trim().toLowerCase();
+        const matchedCity = Object.keys(cityImages).find(city => city.toLowerCase() === teamCity);
+        const imagePath = matchedCity ? cityImages[matchedCity] : undefined;
+        
+        const points = await getPointsByTeam(team.id_equipo);
+        const point = points || {};
+
+        const teamHTML = `
+            <div class="sections teams">
+                <div class="team">
+                    <img src="${imagePath}" alt="${team.ciudad}" class="teamLogo">
+                    <p class="tec">${team.nombre ? team.nombre : team.ciudad}</p>
+                </div>
+
+                <div class="numberPoints">
+                    <div>${point.partidosJugados ?? ''}</div>
+                    <div>${point.partidosGanados ?? ''}</div>
+                    <div>${point.partidosPerdidos ?? ''}</div>
+                    <div>${point.puntosAFavor ?? ''}</div>
+                    <div>${point.puntosEnContra ?? ''}</div>
+                    <div>${point.diferenciaPuntos ?? ''}</div>
+                    <div class="pts">${point.puntosTotales ?? ''}</div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', teamHTML);
+    };
+
+    // Añadir filas vacías si hay menos de 4 equipos
+    const remainingSlots = 4 - teams.length;
+    for(let i = 0; i < remainingSlots; i++)
+        container.insertAdjacentHTML('beforeend', 
+            '<div class="sections teams"></div>'
+        );
+
+    // Quitar última línea
+    const allPts = container.querySelectorAll('.pts');
+    if (allPts.length > 0) {
+        allPts[allPts.length - 1].classList.add('noline');
+    }
+}
+
+/* =================== API =================== */
 async function fetchGroups() {
     try {
         const response = await fetch('http://localhost:3000/api/grupos');
@@ -330,14 +387,22 @@ async function initializeGroups() {
         console.log('Grupos obtenidos:', groups);
 
         currentGroups = groups.filter(g => g.disciplinaid === disciplineId);
-        console.log('Grupos filtrados:', currentGroups);
+        console.log('Grupos filtrados:', currentGroups);        
 
-        const teams = await getTeamsId(disciplineId, );
-        console.log('Equipos obtenidos:', teams);
-
-        currentGroupIndex = 0;
         updateGroupNavigation();
+
+        const groupName = document.querySelector('.lblGroup h1').textContent.trim().toLowerCase();
+        console.log('Nombre: ', groupName);
+        const currentGroup = currentGroups.find(g => g.nombre.toLowerCase() === groupName);
+        if (!currentGroup) console.log('Grupo no encontrado');
+        else console.log('Grupo: ', currentGroup);
+
+        const teams = await getTeamsByGroup(currentGroup.id_grupo);
+        console.log('Equipos del grupo: ', teams);
+        await renderTeams(teams);
         
+        currentGroupIndex = currentGroups.findIndex(g => g.id_grupo === currentGroup.id_grupo);
+
     } catch (error) {
         console.error('Error inicializando grupos:', error);
         currentGroups = [];
@@ -345,29 +410,68 @@ async function initializeGroups() {
     }
 }
 
-/* =================== EQUIPOS POR GRUPO =================== */
-async function fetchTeams() {
+
+/* =================== CONSULTAS =================== */
+async function getPointsByTeam(equipoid) {
+    try {
+        const response = await fetch('http://localhost:3000/api/clasificacion');
+        if(!response.ok) throw new Error('Error fetching puntos');
+        const points = await response.json();
+
+        return points.find(p => p.equipoid === equipoid);
+    } catch (error) {
+        console.error('Error obteniendo puntos:', error);
+        return null;
+    }
+}
+
+async function getTeamsByGroup(grupoid) {
     try {
         const response = await fetch('http://localhost:3000/api/equipo');
-        if(!response.ok) throw new Error(`Error ${response.status}`);
-        return response.json();
-    } catch(error) {
-        console.log('Error fetching groups:', error);
+        if (!response.ok) throw new Error('Error fetching equipos');
+        const teams = await response.json();
+        
+        return teams.filter(t => t.grupoid === grupoid);
+        
+    } catch (error) {
+        console.error('Error obteniendo equipos:', error);
         return [];
     }
 }
 
-async function getTeams(disciplinaid, grupoid) {
+async function getGroupId(disciplinaId) {
     try {
-        const teams = await fetchTeams();
+        const groupName = document.querySelector('.lblGroup h1').textContent.trim();
+        const groups = await fetchGroups();
+        
+        const group = groups.find(g => 
+            g.nombre === groupName && 
+            g.disciplinaid === disciplinaId
+        );
+        
+        return group?.id_grupo || null;
+    } catch (error) {
+        console.error('Error obteniendo grupo:', error);
+        return null;
+    }
+}
+
+async function getDisciplineId(category) {
+    try {
+        // Obtener nombre de la disciplina desde el HTML
+        const disciplineName = document.querySelector('.type').textContent.trim();
+        
+        // Fetch a endpoint de disciplinas
+        const response = await fetch('http://localhost:3000/api/disciplinas');
+        const disciplines = await response.json();
         
         // Buscar coincidencia exacta
-        const team = teams.find(d => 
+        const discipline = disciplines.find(d => 
             d.nombre === disciplineName && 
             d.categoria.toLowerCase() === (category === 'male' ? 'varonil' : 'femenil')
         );
 
-        return team?.id_diciplinas || null;
+        return discipline?.id_diciplinas || null;
         
     } catch (error) {
         console.error('Error obteniendo disciplina:', error);

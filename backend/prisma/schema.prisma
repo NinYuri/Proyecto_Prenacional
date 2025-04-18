@@ -13,13 +13,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model tecs {
+  id_tecs        Int    @id @default(autoincrement())
+  nombre         String
+  logo           String
+  ciudad         String
+
+  // Relaciones
+  equipos        equipos[]
+}
+
+model equipos {
+  id_equipo           Int    @id @default(autoincrement())
+  nombre              String?
+  diciplinaid         Int
+  grupoid             Int
+  tecsid              Int
+
+  // Relaciones
+  partidos_local      partidos[]       @relation("equipo_local")
+  partidos_visitante  partidos[]       @relation("equipo_visitante")
+
+  equipo1             rolDeJuegos[]   @relation("equipo1")
+  equipo2             rolDeJuegos[]   @relation("equipo2")
+
+  jugador             jugadores[]
+  clasificacion       clasificacion[]
+
+  diciplinas          diciplinas   @relation(fields: [diciplinaid], references: [id_diciplinas], onDelete: Cascade)  
+  grupos              grupos       @relation(fields: [grupoid], references: [id_grupo], onDelete: Cascade)  
+  tecs                tecs         @relation(fields: [tecsid], references: [id_tecs], onDelete: Cascade)
+}
+
+model diciplinas {
+  id_diciplinas     Int    @id @default(autoincrement())
+  nombre            String
+  categoria         String
+  
+  // Relaciones
+  equipos           equipos[]
+  RolDeJuegos       rolDeJuegos[]
+  usuarios          usuarios[]
+  grupos            grupos[]
+}
+
+model clasificacion {
+  id_clasificacion      Int   @id @default(autoincrement())
+  equipoid              Int
+  puntosTotales         Int
+  partidosJugados       Int
+  partidosGanados       Int
+  partidosPerdidos      Int
+  puntosAFavor          Int
+  puntosEnContra        Int
+  puntosPorPartido      Int
+  diferenciaPuntos      Int
+
+  // Relaciones
+  equipo                equipos @relation(fields: [equipoid], references: [id_equipo], onDelete: Cascade)
+  RolDeJuegos           rolDeJuegos[]
+}
+
+
 
 model usuarios {
   id_user        Int   @id @default(autoincrement())
-  nombre        String
-  rollid        Int
-  disciplinaid  Int
-  grupoid       Int
+  nombre         String
+  rollid         Int
+  disciplinaid   Int
+  grupoid        Int
 
   // Relaciones
   diciplinas    diciplinas @relation(fields: [disciplinaid], references: [id_diciplinas], onDelete: Cascade)
@@ -31,33 +93,13 @@ model canchas {
   id_cancha     Int      @id @default(autoincrement())
   nombre        String
   ubicacion     String  
-  imagen        String?  // Imagen opcional
+  imagen        String
+  
 
 
   partidos   partidos[]  // Relación inversa
 }
 
-model equipos {
-  id_equipo           Int             @id @default(autoincrement())
-  nombre              String?
-  ciudad              String
-  diciplinaid         Int
-  grupoid             Int
-
-  // Relaciones
-  partidos_local      partidos[]       @relation("equipo_local")
-  partidos_visitante  partidos[]       @relation("equipo_visitante")
-
-  grupos              grupos     @relation(fields: [grupoid], references: [id_grupo], onDelete: Cascade)
-
-  equipo1             rolDeJuegos[]   @relation("equipo1")
-  equipo2             rolDeJuegos[]   @relation("equipo2")
-
-  diciplinas         diciplinas @relation(fields: [diciplinaid], references: [id_diciplinas], onDelete: Cascade)
-
-  jugador             jugadores[]
-  clasificacion       clasificacion[]
-}
 
 model rolDeJuegos {
   id_RolDeJuegos      Int             @id @default(autoincrement())
@@ -93,32 +135,14 @@ model fasesTorneo {
   partidos   partidos[] 
 }
 
-model clasificacion {
-  id_clasificacion    Int   @id @default(autoincrement())
-  equipoid            Int //aqui me falta la llave foranea para equipo
-  puntosTotales       Int
-  partidosJugados     Int
-  partidosGanados     Int
-  partidosPerdidos    Int
-  puntosAFavor        Int
-  puntosEnContra      Int
-  puntosPorPartido    Int
-  diferenciaPuntos    Int
 
-  // Relaciones
-  equipo equipos @relation(fields: [equipoid], references: [id_equipo], onDelete: Cascade)
-  RolDeJuegos   rolDeJuegos[] // Relación inversa
-  
-
-
-}
 
 model jugadores {
-  id_jugador  Int   @id @default(autoincrement())
-  nombre      String
-  numero      Int
-  posicion    String
-  equipoid    Int //aqui me falta la llave foranea para equipo
+  id_jugador      Int    @id @default(autoincrement())
+  nombre          String
+  numero          Int
+  posicion        String
+  equipoid        Int
 
   // Relaciones
   equipo equipos @relation(fields: [equipoid], references: [id_equipo], onDelete: Cascade)
@@ -155,17 +179,7 @@ model partidos {
   
  }
 
- model diciplinas {
-  id_diciplinas         Int @id @default(autoincrement())
-  nombre              String
-  categoria         String
-  
-  // Relaciones
-  equipos           equipos[]
-  RolDeJuegos      rolDeJuegos[]
-  usuarios        usuarios[]
-  grupos         grupos[]
- }
+
 
  model grupos {
   id_grupo            Int @id @default(autoincrement())

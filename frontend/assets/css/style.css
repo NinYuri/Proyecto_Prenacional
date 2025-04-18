@@ -301,7 +301,7 @@ header {
 
 .groups .info {
     width: 100%;
-    height: 85%;
+    height: 90%;
     display: block;
     text-align: left;
     padding: 5px 0 0 90px;
@@ -417,16 +417,7 @@ header {
     opacity: 100%;
 }
 
-.grid-header,
-.grid-row { display: contents; }
-
-.grid-row > div {
-    padding: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(139, 156, 182, 0.72);
-}
+.grid-header { display: contents; }
 
 .sections { height: 30%; }
 
@@ -450,6 +441,7 @@ header {
 .sections.titlePoints div:last-child,
 .numberPoints div:last-child { margin-right: 0; }
 
+.ptsTitle,
 .pts {
     position: relative;
     height: 100%;
@@ -464,6 +456,7 @@ header {
     border-radius: 10px 10px 0 0;
 }
 
+.ptsTitle::after,
 .pts::after {
     content: "";
     position: absolute;
@@ -473,6 +466,10 @@ header {
     background-color: var(--black);
     border-radius: 2px;
 }
+
+.pts.noline::after { display: none; }
+
+.pts.noline { border-radius: 0 0 10px 10px !important; }
 
 .sections.teams {
     display: flex;
@@ -551,4 +548,16 @@ header {
     background-color: olive;
     border-right: 3px solid var(--black);
     margin: 0 15px;
+}
+
+.sedes .ribbonBack {
+    width: 100%;
+    height: 45%;
+    display: flex;
+    justify-content: end;
+    margin-top: 50px;
+}
+
+.sedes .ribbonBack img {
+    width: 100%;
 }
