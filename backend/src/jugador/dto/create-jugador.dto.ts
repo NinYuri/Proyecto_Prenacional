@@ -9,6 +9,8 @@ export class CreateJugadorDto {
         public numero: number;
         @IsString()
         public posicion: string;
+        @IsString()
+        public foto: string;
         @IsNumber()
         @Type(() => Number)
         public equipoid: number;

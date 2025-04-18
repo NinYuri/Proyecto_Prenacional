@@ -1,6 +1,5 @@
-import { Decimal } from "@prisma/client/runtime/library";
 import { Type } from "class-transformer";
-import { IsDecimal, IsNumber, IsString } from "class-validator";
+import { IsNumber, IsString } from "class-validator";
 
 export class CreatePuntosdeintereDto {
         @IsString()
@@ -17,6 +16,5 @@ export class CreatePuntosdeintereDto {
         public horarioAtencion: string;
         @IsNumber()
         @Type(() => Number)
-        public calificacion: number;
-    
+        public canchaid: number;
 }

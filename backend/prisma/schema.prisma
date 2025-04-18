@@ -74,8 +74,59 @@ model clasificacion {
   RolDeJuegos           rolDeJuegos[]
 }
 
+model jugadores {
+  id_jugador      Int    @id @default(autoincrement())
+  nombre          String
+  numero          Int
+  posicion        String
+  foto            String
+  equipoid        Int
+
+  // Relaciones
+  equipo          equipos @relation(fields: [equipoid], references: [id_equipo], onDelete: Cascade)
+}
+
+model grupos {
+  id_grupo            Int    @id @default(autoincrement())
+  nombre              String
+  disciplinaid        Int
+  
+  // Relaciones
+  diciplinas         diciplinas @relation(fields: [disciplinaid], references: [id_diciplinas], onDelete: Cascade)
+  usuarios           usuarios[]
+  equipos            equipos[]
+}
+
+model canchas {
+  id_cancha         Int    @id @default(autoincrement())
+  nombre            String
+  ubicacion         String  
+  imagen            String
+  mapa              String?
+  telefono          String?
+  tipo              String
+
+  // Relaciones
+  partidos          partidos[]
+  puntosdeInteres   puntosdeInteres[]
+}
+
+model puntosdeInteres {
+  id_PuntosdeInteres    Int    @id @default(autoincrement())
+  nombre                String
+  tipo                  String
+  ubicacion             String
+  telefono              String
+  imagen                String
+  horarioAtencion       String
+  canchaid              Int
+
+  // Relaciones
+  canchas               canchas @relation(fields: [canchaid], references: [id_cancha], onDelete: Cascade)
+}
 
 
+// Faltan correcciones
 model usuarios {
   id_user        Int   @id @default(autoincrement())
   nombre         String
@@ -88,18 +139,6 @@ model usuarios {
   grupos        grupos @relation(fields: [grupoid], references: [id_grupo], onDelete: Cascade)
   roles         roles @relation(fields: [rollid], references: [id_rol], onDelete: Cascade)
 }
-
-model canchas {
-  id_cancha     Int      @id @default(autoincrement())
-  nombre        String
-  ubicacion     String  
-  imagen        String
-  
-
-
-  partidos   partidos[]  // Relación inversa
-}
-
 
 model rolDeJuegos {
   id_RolDeJuegos      Int             @id @default(autoincrement())
@@ -122,7 +161,6 @@ model rolDeJuegos {
 
 }
 
-
 model fasesTorneo {
   id_fase_torneo    Int    @id @default(autoincrement())
   nombre            String
@@ -136,18 +174,6 @@ model fasesTorneo {
 }
 
 
-
-model jugadores {
-  id_jugador      Int    @id @default(autoincrement())
-  nombre          String
-  numero          Int
-  posicion        String
-  equipoid        Int
-
-  // Relaciones
-  equipo equipos @relation(fields: [equipoid], references: [id_equipo], onDelete: Cascade)
-
-}
 model partidos {
   id_partido         Int      @id @default(autoincrement())
   fecha              DateTime
@@ -167,30 +193,6 @@ model partidos {
   fase_torneo     fasesTorneo      @relation(fields: [faseTorneoid], references: [id_fase_torneo], onDelete: Cascade)
 }
 
- model puntosdeInteres {
-  id_PuntosdeInteres  Int @id @default(autoincrement())
-  nombre              String
-  tipo                String
-  ubicacion           String
-  telefono            String
-  imagen              String
-  horarioAtencion     String
-  calificacion        Float 
-  
- }
-
-
-
- model grupos {
-  id_grupo            Int @id @default(autoincrement())
-  nombre              String
-  disciplinaid        Int
-  
-  // Relaciones
-  diciplinas         diciplinas @relation(fields: [disciplinaid], references: [id_diciplinas], onDelete: Cascade)
-  usuarios           usuarios[]
-  equipos            equipos[]
- }
 
 model roles{
   id_rol             Int @id @default(autoincrement())

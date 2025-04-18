@@ -7,4 +7,10 @@ export class CreateCanchaDto {
         public ubicacion: string;
         @IsString()
         public imagen: string;
+        @IsString()
+        public mapa: string;
+        @IsString()
+        public telefono: string;
+        @IsString()
+        public tipo: string;
 }

@@ -3,4 +3,7 @@ export class Cancha {
     public nombre: string;
     public ubicacion: string;
     public imagen: string;
+    public mapa: string;
+    public telefono: string;
+    public tipo: string;
 }

@@ -9,5 +9,5 @@ export class Puntosdeintere {
     telefono: string;
     imagen: string;
     horarioAtencion: string;
-    calificacion: number; // Cambiado a number para la calificación
+    canchaid: number;
 }

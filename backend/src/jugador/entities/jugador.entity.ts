@@ -3,5 +3,6 @@ export class Jugador {
     public nombre: string;
     public numero: number;
     public posicion: string;
+    public foto: string;
     public equipoid: number;
 }

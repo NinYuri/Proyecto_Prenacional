@@ -12,9 +12,10 @@ import { GruposModule } from './grupos/grupos.module';
 import { PuntosdeinteresModule } from './puntosdeinteres/puntosdeinteres.module';
 import { RoldejuegosModule } from './roldejuegos/roldejuegos.module';
 import { RolesModule } from './roles/roles.module';
+import { TecsModule } from './tecs/tecs.module';
 
 @Module({
-  imports: [ EquipoModule, UserModule, CanchaModule, FaseTorneoModule, ClasificacionModule, JugadorModule, PartidoModule, DisciplinasModule, GruposModule, PuntosdeinteresModule, RoldejuegosModule, RolesModule],
+  imports: [ EquipoModule, UserModule, CanchaModule, FaseTorneoModule, ClasificacionModule, JugadorModule, PartidoModule, DisciplinasModule, GruposModule, PuntosdeinteresModule, RoldejuegosModule, RolesModule, TecsModule],
   controllers: [],
   providers: [],
 })
