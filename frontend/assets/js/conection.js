@@ -4,6 +4,7 @@ let currentGroupIndex = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeMenu();
+    getImagenesCarousel();
     initializeGroups();
     setupNavigationControls();
 });
@@ -27,15 +28,6 @@ async function initializeMenu() {
 }
 
 /* ============================= funciones principales ============================= */
-async function fetchDisciplines() {
-    const response = await fetch('http://localhost:3000/api/disciplinas');
-
-    if(!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-    }
-    return response.json();
-}
-
 // Procesar y mostrar disciplinas
 function disciplinesMenu(disciplines) {
     const menuContainer = document.querySelector('.subdiscipline');
@@ -294,21 +286,6 @@ function resetAnimations() {
 
 /* =================== NAVEGACIÓN DE EQUIPOS =================== */
 async function renderTeams(teams) {
-    const cityImages = {
-        'Jiquilpan': '/frontend/assets/images/ITJ.webp',
-        'La Piedad': '/frontend/assets/images/Piedad.webp',
-        'Morelia': '/frontend/assets/images/Morelia.webp',
-        'Valle de Morelia': '/frontend/assets/images/Valle_Morelia.webp',
-        'Zitácuaro': '/frontend/assets/images/Zitacuaro.webp',
-        'Zamora': '/frontend/assets/images/Zamora.webp',
-        'Apatzingán': '/frontend/assets/images/Apatzingan.webp',
-        'Los Reyes': '/frontend/assets/images/Reyes.webp',
-        'Purhépecha': '/frontend/assets/images/Purhepecha.webp',
-        'Puruándiro': '/frontend/assets/images/Puruandiro.webp',
-        'Uruapan': '/frontend/assets/images/Uruapan.webp',
-        'Jilotepec': '/frontend/assets/images/Jilotepec.webp'
-    };
-
     const container = document.querySelector('.points');    
     
     // Limpiar contenido existente
@@ -316,18 +293,17 @@ async function renderTeams(teams) {
     existingTeams.forEach(team => team.remove());
 
     for(const team of teams) {
-        const teamCity = (team.ciudad || '').trim().toLowerCase();
-        const matchedCity = Object.keys(cityImages).find(city => city.toLowerCase() === teamCity);
-        const imagePath = matchedCity ? cityImages[matchedCity] : undefined;
-        
+        const logos = await getLogoByTeam(team.tecsid);
+        const logo = logos || {};
+
         const points = await getPointsByTeam(team.id_equipo);
         const point = points || {};
 
         const teamHTML = `
             <div class="sections teams">
                 <div class="team">
-                    <img src="${imagePath}" alt="${team.ciudad}" class="teamLogo">
-                    <p class="tec">${team.nombre ? team.nombre : team.ciudad}</p>
+                    <img src="${logo.logo}" alt="${logo.ciudad}" class="teamLogo">
+                    <p class="tec">${team.nombre ? team.nombre : logo.ciudad}</p>
                 </div>
 
                 <div class="numberPoints">
@@ -359,17 +335,6 @@ async function renderTeams(teams) {
 }
 
 /* =================== API =================== */
-async function fetchGroups() {
-    try {
-        const response = await fetch('http://localhost:3000/api/grupos');
-        if(!response.ok) throw new Error(`Error ${response.status}`);
-        return response.json();
-    } catch(error) {
-        console.log('Error fetching groups:', error);
-        return [];
-    }
-}
-
 async function initializeGroups() {
     try {
         const initialCategory = document.querySelector('.teamsM.active') ? 'male' : 'female';
@@ -425,6 +390,17 @@ async function getPointsByTeam(equipoid) {
     }
 }
 
+async function getLogoByTeam(tecsid) {
+    try {
+        const tec = await fetchTecs();
+
+        return tec.find(t => t.id_tecs === tecsid);
+    } catch(error) {
+        console.error('Error obteniendo logo:', error);
+        return null;
+    }
+}
+
 async function getTeamsByGroup(grupoid) {
     try {
         const response = await fetch('http://localhost:3000/api/equipo');
@@ -462,8 +438,7 @@ async function getDisciplineId(category) {
         const disciplineName = document.querySelector('.type').textContent.trim();
         
         // Fetch a endpoint de disciplinas
-        const response = await fetch('http://localhost:3000/api/disciplinas');
-        const disciplines = await response.json();
+        const disciplines = await fetchDisciplines();
         
         // Buscar coincidencia exacta
         const discipline = disciplines.find(d => 
@@ -476,5 +451,57 @@ async function getDisciplineId(category) {
     } catch (error) {
         console.error('Error obteniendo disciplina:', error);
         return null;
+    }
+}
+
+async function getImagenesCarousel() {
+    try {
+        const tecs = await fetchTecs();
+        const tecContainer = document.querySelector('.tecs');
+
+        tecContainer.innerHTML = '';
+
+        tecs.forEach(tec => {
+            const image = document.createElement('img');
+            image.src = tec.logo;
+            image.alt = tec.nombre;
+            tecContainer.appendChild(image);
+        });
+    } catch(error) {
+        console.error('Error cargando los tecs:', error);
+    }
+}
+
+/* =================== FETCH =================== */
+async function fetchDisciplines() {
+    try {
+        const response = await fetch('http://localhost:3000/api/disciplinas');
+        if(!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.error('Error obteniendo disciplinas:', error);
+        return [];
+    }
+}
+
+async function fetchGroups() {
+    try {
+        const response = await fetch('http://localhost:3000/api/grupos');
+        if(!response.ok) throw new Error(`Error ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.log('Error fetching groups:', error);
+        return [];
+    }
+}
+
+async function fetchTecs() {
+    try {
+        const response = await fetch('http://localhost:3000/api/tecs');
+        if(!response.ok) throw new Error(`Error ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.log('Error fetching tecs:', error);
+        return [];
     }
 }
