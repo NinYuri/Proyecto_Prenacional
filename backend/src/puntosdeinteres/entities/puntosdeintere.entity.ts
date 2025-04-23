@@ -9,5 +9,6 @@ export class Puntosdeintere {
     telefono: string;
     imagen: string;
     horarioAtencion: string;
+    mapa: string;
     canchaid: number;
 }

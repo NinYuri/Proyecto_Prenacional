@@ -1,14 +1,47 @@
 /* ============================= CARGA DE PÁGINA ============================= */
 let currentGroups = [];
 let currentGroupIndex = 0;
+let currentSede = null;
+let availableSedes = [];
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeMenu();
     getImagenesCarousel();
     initializeGroups();
     setupNavigationControls();
+
+    document.querySelectorAll('.sedesOptions p').forEach(option => {
+        option.addEventListener('click', async () => {
+            const title = document.querySelector('.sedesTitles h3');
+            const prevTitle = title.textContent.trim();            
+
+            document.querySelectorAll('.sedesOptions p').forEach(p => p.classList.remove('active'));
+            option.classList.add('active');
+            
+            // Intercambiar textos
+            title.textContent = option.textContent.trim();
+            option.textContent = prevTitle;
+            
+            const sedes = await getSedeByTitle();
+            if (sedes.length === 0) {
+                console.log('No hay sedes para esta categoría');
+                return;
+            }
+            currentSede = sedes[0];
+            await updateCardWithData(currentSede);
+            updateCarousel();
+        });
+    });
 });
 
+
+/* ============================= QUITAR ACENTOS ============================= */
+function removeAccents(str) {
+    return str.normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')    // Elimina diacríticos
+            .replace(/ñ/g, 'n')
+            .replace(/Ñ/g, 'N');
+}
 
 /* ============================= GESTIÓN DE MENÚ DINÁMICO ============================= */
 async function initializeMenu() {
@@ -261,7 +294,7 @@ function updateGroupNavigation() {
     }
 
     const currentGroup = currentGroups[currentGroupIndex];
-    groupName.textContent = currentGroup?.nombre || 'Grupo desconocido';
+    groupName.textContent = removeAccents(currentGroup?.nombre) || 'Grupo desconocido';
     
     // Control de flechas
     prevArrow.style.display = currentGroupIndex > 0 ? 'flex' : 'none';
@@ -334,7 +367,71 @@ async function renderTeams(teams) {
     }
 }
 
-/* =================== API =================== */
+/* ============================= CARD DE SEDES ============================= */
+async function updateCardWithData(sede) {
+    const card = document.querySelector('.cardHolder');
+
+    card.querySelector('.cardTitle').textContent = removeAccents(sede.nombre);
+    card.querySelector('img').src = sede.imagen;
+    card.querySelector('.cardUb p').textContent = sede.ubicacion;
+
+    // Actualizar links con datos reales
+    const linksContainer = card.querySelector('.cardLinks');
+    linksContainer.innerHTML = '';
+
+    // Link Encontrar
+    const mapLink = document.createElement('a');
+    mapLink.href = sede.mapa;
+    mapLink.innerHTML = '<img src="/frontend/assets/images/Location.webp" alt="Ubicacion">Encontrar';
+    linksContainer.appendChild(mapLink);
+
+    // Link Restaurantes
+    try {
+        const nearbyPoints = await getNearestPoints(sede.id_cancha);
+        const restaurants = nearbyPoints.filter(p => p.tipo === 'Restaurante');
+
+        if(restaurants.length > 0) {
+            const restaurantLink = document.createElement('a');
+            restaurantLink.href = `#`;
+            restaurantLink.innerHTML = '<img src="/frontend/assets/images/Rest.webp" alt="Restaurantes">Restaurantes Cercanos';
+            linksContainer.appendChild(restaurantLink);
+        }
+    } catch(error) {
+        console.error('Error cargando restaurantes: ', error);
+    }
+}
+
+function updateCarousel() {
+    const carousel = document.querySelector('.carImg');
+    carousel.innerHTML = '';
+
+    // Filtrar sedes excluyendo la actual del card
+    const availableSedes = allSedes.filter(sede =>
+        sede.tipo === currentSede.tipo &&
+        sede.id_cancha !== currentSede.id_cancha
+    );
+
+    carousel.classList.remove('only-two');
+    if (availableSedes.length <= 2)
+        carousel.classList.add('only-two');
+
+    availableSedes.forEach((sede, index) => {
+        const img = document.createElement('img');
+        img.src = sede.imagen;
+        img.alt = sede.nombre;
+        img.className = `carouselItem${index}`;        
+
+        img.addEventListener('click', async () => {
+            currentSede = sede;
+            await updateCardWithData(currentSede);
+            updateCarousel();
+        });
+
+        carousel.appendChild(img);
+    });
+}
+
+/* ============================= API ============================= */
 async function initializeGroups() {
     try {
         const initialCategory = document.querySelector('.teamsM.active') ? 'male' : 'female';
@@ -368,6 +465,12 @@ async function initializeGroups() {
         
         currentGroupIndex = currentGroups.findIndex(g => g.id_grupo === currentGroup.id_grupo);
 
+        const sedes = await getSedeByTitle();
+        console.log('Sedes: ', sedes);        
+        currentSede = sedes[0];
+        await updateCardWithData(currentSede);
+        updateCarousel();
+
     } catch (error) {
         console.error('Error inicializando grupos:', error);
         currentGroups = [];
@@ -377,6 +480,35 @@ async function initializeGroups() {
 
 
 /* =================== CONSULTAS =================== */
+async function getNearestPoints(canchaid) {
+    try {
+        const points = await fetchPuntosdeInteres();
+
+        return points.filter(p => p.canchaid === canchaid);
+    } catch(error) {
+        console.error('Error obteniendo puntos cercanos:', error);
+        return [];
+    }
+}
+
+async function getSedeByTitle() {
+    try {
+        const type = document.querySelector('.sedesTitles h3').textContent.trim().toUpperCase();
+        allSedes = await fetchSedes();
+
+        const typeMap = {
+            'CANCHAS': 'CANCHA',
+            'HOSPITALES': 'HOSPITAL',
+            'HOTELES': 'HOTEL'           
+        };
+
+        return allSedes.filter(s => s.tipo.toUpperCase() === typeMap[type]);        
+    } catch(error) {
+        console.error('Error obteniendo sede por título:', error);
+        return [];
+    }
+}
+
 async function getPointsByTeam(equipoid) {
     try {
         const response = await fetch('http://localhost:3000/api/clasificacion');
@@ -502,6 +634,28 @@ async function fetchTecs() {
         return response.json();
     } catch(error) {
         console.log('Error fetching tecs:', error);
+        return [];
+    }
+}
+
+async function fetchSedes() {
+    try {
+        const response = await fetch('http://localhost:3000/api/cancha');
+        if(!response.ok) throw new Error(`Error ${response.status}`); 
+        return response.json();
+    } catch(error) {
+        console.log('Error fetching sedes:', error);  
+        return [];
+    }
+}
+
+async function fetchPuntosdeInteres() {
+    try {
+        const response = await fetch('http://localhost:3000/api/puntosdeinteres');
+        if(!response.ok) throw new Error(`Error ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.log('Error fetching puntos de interés:', error);
         return [];
     }
 }

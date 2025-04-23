@@ -1,16 +1,22 @@
-// Variables de visibilidad de contraseña
+/* ========================================== VARIABLES ========================================== */
+// Visibilidad de contraseña
 const passwordFields = [
     { input: document.getElementById("pass"), icon: document.querySelector("#icon-lock-login") },
     { input: document.getElementById("pass-regis"), icon: document.querySelector("#icon-lock-register") },
     { input: document.getElementById("confpass"), icon: document.querySelector("#icon-lock-conf") }
 ];
 
-// Variables de movimiento login - registro
+// Movimiento login - registro
 const btnRegister = document.querySelector("#register-link");
 const container = document.querySelector(".container");
 const containerRegister = document.querySelector(".container-register");
 const btnregUsu = document.querySelector("#btn-registro");
 
+// Variables de validación register y login form 
+const userLogin = document.getElementById("user");
+const passLogin = document.getElementById("pass");
+
+/* ========================================== MÉTODOS ========================================== */
 // Visibilidad de contraseñas
 passwordFields.forEach(({ input, icon }) => {
     icon.addEventListener("click", () => {
@@ -24,6 +30,20 @@ passwordFields.forEach(({ input, icon }) => {
     });
 });
 
+// Validación de los input para animación
+function InputValidacion(inputElement) {
+  inputElement.addEventListener("input", () => {
+      if (inputElement.value.trim() !== "") {
+          inputElement.classList.add("valid");
+      } else {
+          inputElement.classList.remove("valid");
+      }
+  });
+}
+
+InputValidacion(userLogin);
+InputValidacion(passLogin);
+
 // Animación Carta, primera vuelta
 btnRegister.addEventListener('click', () => {
         container.classList.remove('back')
@@ -31,7 +51,7 @@ btnRegister.addEventListener('click', () => {
         containerRegister.style.animation = 'appear 1s both';
 });
 
-// Mensaje alerta error
+/* ========================================== ALERTA ERROR ========================================== */
 function Toast(icon, titulo) {
     const Toast = Swal.mixin({
       toast: true,

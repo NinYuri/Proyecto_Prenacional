@@ -501,11 +501,11 @@ header {
     flex-direction: column;
     justify-content: end;
     align-items: flex-end;
-    padding: 150px 100px 0 0;
+    padding: 150px 140px 0 0;
 }
 
 .sedesTitles {
-    width: 35%;
+    width: 38%;
     height: 100%;
     display: flex;
     justify-content: center;
@@ -521,7 +521,7 @@ header {
 }
 
 .sedesOptions {
-    width: 35%;
+    width: 38%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -555,13 +555,13 @@ header {
 .ribbonBack .carImg {
     position: absolute;
     width: 100%;
-    transform: translateY(50%);
+    transform: translateX(-19%) translateY(50%);
     display: flex;
-    gap: 15px;
+    gap: 25px;
 }
 
 .ribbonBack .carImg img {
-    width: auto;
+    width: 300px;
     height: 204px;
     border-radius: 5px;    
     transition: transform 0.3s, border 0.3s;
@@ -569,7 +569,13 @@ header {
     cursor: pointer;
 }
 
+.ribbonBack .carImg img:first-child { margin-right: 510px; }
+
 .ribbonBack .carImg img:hover { transform: scale(1.05); }
+
+.ribbonBack .carImg.only-two img { transform: translateX(277%); }
+
+.ribbonBack .carImg.only-two img:first-child { margin-right: 0px; }
 
 .card {
     position: relative;

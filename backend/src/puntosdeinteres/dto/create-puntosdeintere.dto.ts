@@ -14,6 +14,8 @@ export class CreatePuntosdeintereDto {
         public imagen: string;
         @IsString()
         public horarioAtencion: string;
+        @IsString()
+        public mapa: string;
         @IsNumber()
         @Type(() => Number)
         public canchaid: number;

@@ -102,7 +102,7 @@ model canchas {
   nombre            String
   ubicacion         String  
   imagen            String
-  mapa              String?
+  mapa              String
   telefono          String?
   tipo              String
 
@@ -119,6 +119,7 @@ model puntosdeInteres {
   telefono              String
   imagen                String
   horarioAtencion       String
+  mapa                  String
   canchaid              Int
 
   // Relaciones
