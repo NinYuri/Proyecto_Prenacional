@@ -3,35 +3,15 @@ let currentGroups = [];
 let currentGroupIndex = 0;
 let currentSede = null;
 let availableSedes = [];
+let currentIndex = 0;
+let firstBan = false;
 
 document.addEventListener("DOMContentLoaded", () => {
     initializeMenu();
     getImagenesCarousel();
     initializeGroups();
     setupNavigationControls();
-
-    document.querySelectorAll('.sedesOptions p').forEach(option => {
-        option.addEventListener('click', async () => {
-            const title = document.querySelector('.sedesTitles h3');
-            const prevTitle = title.textContent.trim();            
-
-            document.querySelectorAll('.sedesOptions p').forEach(p => p.classList.remove('active'));
-            option.classList.add('active');
-            
-            // Intercambiar textos
-            title.textContent = option.textContent.trim();
-            option.textContent = prevTitle;
-            
-            const sedes = await getSedeByTitle();
-            if (sedes.length === 0) {
-                console.log('No hay sedes para esta categoría');
-                return;
-            }
-            currentSede = sedes[0];
-            await updateCardWithData(currentSede);
-            updateCarousel();
-        });
-    });
+    setupSedesControl();
 });
 
 
@@ -401,7 +381,7 @@ async function updateCardWithData(sede) {
     }
 }
 
-function updateCarousel() {
+async function updateCarousel() {
     const carousel = document.querySelector('.carImg');
     carousel.innerHTML = '';
 
@@ -410,24 +390,97 @@ function updateCarousel() {
         sede.tipo === currentSede.tipo &&
         sede.id_cancha !== currentSede.id_cancha
     );
+    console.log(availableSedes);
 
+    // Reordenar sedes para efecto circular
+    const reorderedSedes = [];
+    for(let i = -1; i < availableSedes.length - 1; i++) {
+        const adjustedIndex = (currentIndex + i + availableSedes.length) % availableSedes.length;
+        reorderedSedes.push(availableSedes[adjustedIndex]);
+    }
+    console.log(reorderedSedes);
+
+    // Aplicar CSS condicionales
     carousel.classList.remove('only-two');
-    if (availableSedes.length <= 2)
+    if(availableSedes.length <= 3)
         carousel.classList.add('only-two');
 
-    availableSedes.forEach((sede, index) => {
+    // Crear elementos
+    reorderedSedes.forEach((sede, index) => {
         const img = document.createElement('img');
         img.src = sede.imagen;
         img.alt = sede.nombre;
-        img.className = `carouselItem${index}`;        
+        img.className = `carouselItem${index + 1}`;        
 
+        console.log('Current Index: ', currentIndex);
         img.addEventListener('click', async () => {
+            if((index + 1) === 1) {
+                // Navegación hacia atrás
+                if(!firstBan) {
+                    currentIndex = 0;
+                    firstBan = true;
+                }
+                else {
+                    currentIndex = (currentIndex - 1 + availableSedes.length) % availableSedes.length;
+                    console.log('Current Index atras: ', currentIndex);
+                }
+            }
+            else {
+                // Navegación hacia adelante
+                if(!firstBan) {
+                    currentIndex = 1;
+                    firstBan = true;
+                }
+                else {
+                    currentIndex = (currentIndex + 1 + availableSedes.length) % availableSedes.length;
+                    console.log('Current Index adelante: ', currentIndex);
+                }                
+            }
+            
             currentSede = sede;
             await updateCardWithData(currentSede);
-            updateCarousel();
+            await updateCarousel();
         });
 
         carousel.appendChild(img);
+    });
+}
+
+async function setupSedesControl() {
+    document.querySelectorAll('.sedesOptions p').forEach(option => {
+        option.addEventListener('click', async () => {
+            const title = document.querySelector('.sedesTitles h3');
+
+            // Guardar textos
+            const prevTitle = title.textContent.trim(); 
+            const newTitle = option.textContent.trim();
+            
+            // Agregar clases de animación
+            title.classList.add('animating-down');
+            option.classList.add('animating-up');
+
+            // Esperar a que termine la animación (coincide con el 'transition' del CSS)
+            setTimeout(async () => {
+                // Intercambiar textos
+                title.textContent = newTitle;
+                option.textContent = prevTitle;
+
+                title.classList.remove('animating-down');
+                option.classList.remove('animating-up');
+
+                document.querySelectorAll('.sedesOptions p').forEach(p => p.classList.remove('active'));
+                option.classList.add('active');
+
+                const sedes = await getSedeByTitle();
+                if (sedes.length === 0) {
+                    console.log('No hay sedes para esta categoría');
+                    return;
+                }
+                currentSede = sedes[0];
+                await updateCardWithData(currentSede);
+                await updateCarousel();
+            }, 300);
+        });
     });
 }
 
@@ -469,7 +522,7 @@ async function initializeGroups() {
         console.log('Sedes: ', sedes);        
         currentSede = sedes[0];
         await updateCardWithData(currentSede);
-        updateCarousel();
+        await updateCarousel();
 
     } catch (error) {
         console.error('Error inicializando grupos:', error);

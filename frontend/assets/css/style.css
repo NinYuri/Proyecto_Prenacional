@@ -531,6 +531,19 @@ header {
 
 .sedesOptions p { cursor: pointer; }
 
+.sedesTitles h3, 
+.sedesOptions p { transition: all 0.3s ease; }
+
+.sedesOptions p.animating-up {
+    transform: translateY(-70px) scale(1.2);
+    opacity: 0;
+}
+
+.sedesTitles h3.animating-down {
+    transform: translateY(70px) scale(0.8);
+    opacity: 0;
+}
+
 .sedesOptions .first { 
     position: relative;
     height: 50%;
@@ -650,4 +663,200 @@ header {
     height: 27px;
     margin-right: 5px;
     vertical-align: middle;
+}
+
+/* ====================== LIST ====================== */
+.list {
+    display: grid;
+    grid-template-columns: 40% 20% 40%;
+    width: 100%;
+    height: 100vh;
+}
+
+.col {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--black);
+}
+
+.col.left,
+.col.right {
+    display: grid;
+    grid-template-rows: 10% 90%;
+    height: 100vh;
+}
+
+.col.left { padding: 20px 0 5px 0; }
+
+.col.right { padding: 5px 0 5px 0; }
+
+.col.center { 
+    justify-content: center; 
+    display: grid;
+    grid-template-rows: auto 1fr;
+}
+
+.players.after { text-align: end; }
+
+.playersTeam {
+    display: flex;
+    align-items: center;
+}
+
+.playersTeam.af { 
+    justify-content: end; 
+    margin-bottom: 15px;
+}
+
+.nextPlayer,
+.prevPlayer {
+    position: relative;
+    margin-left: 4%;
+    background-color: var(--black);
+    border-radius: 100%;
+    width: 45px;
+    height: 39px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.nextPlayer::before,
+.prevPlayer::before {
+    content: "";
+    position: absolute;
+    width: 40px;
+    height: 39px;
+    border: 1px solid var(--white);
+    border-radius: 100%;
+    pointer-events: none;
+}
+
+.nextPlayer ion-icon,
+.prevPlayer ion-icon { 
+    font-size: 25px; 
+    color: var(--white);
+}
+
+.listPlayers { 
+    height: 100%; 
+    padding-top: 10px;
+}
+
+.bgPlayer {
+    position: relative;
+    width: 100%;
+    height: 70px;
+    background-image: linear-gradient(
+        to right,
+        var(--darkblue) 0%,
+        var(--ribbon_sblue) 9%,
+        var(--ribbon_tblue) 23%,
+        var(--ribbon_fblue) 100%
+    );
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    cursor: pointer;
+}
+
+.bgPlayer.rgth {
+    background-image: linear-gradient(
+        to left,
+        var(--darkblue) 0%,
+        var(--ribbon_sblue) 9%,
+        var(--ribbon_tblue) 23%,
+        var(--ribbon_fblue) 100%
+    );
+    padding: 0 20px 0 0;
+    justify-content: end;
+}
+
+.picPlayer {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    margin-right: 50px;    
+}
+
+.picPlayer.rgth {
+    margin: 0 0 0 50px; 
+}
+
+.picPlayer::after,
+.picPlayer::before {
+    content: "";
+    position: absolute;
+    width: 97%;
+    height: 100%;
+    border: 2px solid var(--white);
+    border-radius: 100%;
+    pointer-events: none;
+}
+
+.picPlayer::before { transform: translateX(-5%); }
+
+.picPlayer::after { transform: translateX(-97%) translateY(-3%); }
+
+.picPlayer img {
+    width: 100%;
+    height: 100%;
+    border-radius: 100%;
+}
+
+.bgPlayer .logoPlayer {
+    height: 50px;
+    margin-right: 10px;
+}
+
+.bgPlayer .logoPlayer.rgth { margin: 0 0 0 10px; }
+
+.namePlayer { 
+    width: 200px;
+    text-align: left; 
+    margin-right: 50px;
+}
+
+.namePlayer.rgth { 
+    text-align: right; 
+    margin: 0 0 0 50px;
+}
+
+.namePlayer h3{ font-size: 40px; }
+
+.namePlayer p { font-size: 20px; }
+
+.bgPlayer .numberPlayer { font-size: 60px; }
+
+.teamLogo {
+    width: auto;
+    height: 136px;
+}
+
+.teamLogo img { height: 100%; }
+
+.teamGroup { 
+    height: 100%;
+    width: 100%;
+    font-family: var(--Koulen);
+    display: flex;
+    align-items: start;
+}
+.teamGroup h1 { font-size: 500px; }
+
+.group-text {
+    text-align: center;
+    line-height: 0.8; /* Control del espacio entre letras */
+}
+
+.teamGroup h1 {
+    font-size: 8rem; /* Tamaño relativo */
+    margin: 0;
+}
+
+.teamGroup h2 {
+    font-size: 2rem;
+    margin: 0;
+    transform: translateY(-30%); /* Ajuste fino de posición */
 }
