@@ -1,6 +1,10 @@
+//import AttendanceService from "./attendanceService.js";
+
 /* ============================= CARGA DE PÁGINA ============================= */
 let currentGroups = [];
+let currentTeams = [];
 let currentGroupIndex = 0;
+let currentTeamIndex = 0;
 let currentSede = null;
 let availableSedes = [];
 let currentIndex = 0;
@@ -211,6 +215,8 @@ document.querySelectorAll('.teamsM, .teamsF').forEach(container => {
         const teams = await getTeamsByGroup(currentGroups[currentGroupIndex]?.id_grupo);
         console.log('Equipos del grupo: ', teams);
         await renderTeams(teams);
+
+        await updateGroupTeam();
     });
 });
 
@@ -484,9 +490,208 @@ async function setupSedesControl() {
     });
 }
 
+/* ============================= LISTA DE ASISTENCIA ============================= */
+async function updateGroupTeam() {
+    const groupName = document.querySelector('.groupText h1');
+    const prevGroup = document.querySelector('.groupPrev');
+    const nextGroup = document.querySelector('.groupNext');
+    const prevTeam = document.querySelector('.prevPlayer');
+    const nextTeam = document.querySelector('.nextPlayer');
+
+    if(currentGroups.length === 0) {
+        groupName.textContent = 'No hay grupos disponibles';
+        [prevGroup, nextGroup, prevTeam, nextTeam].forEach(btn =>
+            btn.classList.add('disabled'));
+        return;
+    }
+
+    const currentGroup = currentGroups[currentGroupIndex];
+    const groupNameText = removeAccents(currentGroup?.nombre) || 'Grupo desconocido';
+    const text = groupNameText.split(" ").pop() || 'Desconocido';
+    groupName.textContent = text;
+
+    // Grupo
+    prevGroup.classList.toggle('disabled', currentGroupIndex === 0);
+    nextGroup.classList.toggle('disabled', currentGroupIndex === currentGroups.length - 1); 
+    // Equipos del grupo actual
+    try {
+        currentTeams = await getTeamsByGroup(currentGroup.id_grupo);
+        currentTeamIndex = 0;
+        console.log('Equipo', currentTeamIndex); 
+        updateTeamLogo();
+    } catch(error) {
+        console.error('Error cargando equipos: ', error);
+        currentTeams = [];
+    }    
+
+    // Actualizar estado de los botones
+    prevGroup.classList.toggle('disabled', currentGroupIndex === 0);
+    nextGroup.classList.toggle('disabled', currentGroupIndex === currentGroups.length - 1);
+    updateTeamButtons();
+}
+
+async function updateTeamLogo() {
+    const teamLogo = document.querySelector('.teamLogo img');
+
+    if(currentTeams.length === 0) {
+        teamLogo.src = '';
+        teamLogo.alt = 'Logo no disponible';
+        return;
+    }
+    
+    const currentTeam = currentTeams[currentTeamIndex];
+
+    try {
+        const tec = await getLogoByTeam(currentTeam.tecsid);
+        teamLogo.src = tec.logo || "";
+        teamLogo.alt = tec.ciudad || 'Logo no disponible';
+    } catch(error) {
+        console.log('Error cargando logo: ', error);
+    }
+
+    if(currentTeam)
+        await updateTeamPlayers(currentTeam.id_equipo);        
+}
+
+function updateTeamButtons() {
+    const prevTeam = document.querySelector('.playersTeam.af');
+    const nextTeam = document.querySelector('.playersTeam.bf');
+    const isFirst = currentTeamIndex === 0;
+    const isLast = currentTeamIndex === currentTeams.length - 1;
+
+    prevTeam.classList.toggle('disabled', isFirst);
+    nextTeam.classList.toggle('disabled', isLast);
+
+    document.querySelector('.prevPlayer').classList.toggle('disabled', isFirst);
+    document.querySelector('.nextPlayer').classList.toggle('disabled', isLast);
+
+}
+
+function prevGroup() {
+    if(currentGroupIndex > 0) {
+        currentGroupIndex--;
+        updateGroupTeam();
+    }
+}
+
+function nextGroup() {
+    if(currentGroupIndex < currentGroups.length - 1) {
+        currentGroupIndex++;
+        updateGroupTeam();
+    }
+}
+
+function prevTeam() {
+    if(currentTeamIndex > 0) {
+        currentTeamIndex--;
+        updateTeamLogo();
+        updateTeamButtons();
+    }
+}
+
+function nextTeam() {
+    if(currentTeamIndex < currentTeams.length - 1) {
+        currentTeamIndex++;
+        updateTeamLogo();
+        updateTeamButtons();
+    }
+}
+
+async function renderPlayerHTML(player, isRight) {
+    const team = await getTeamById(player.equipoid);    
+    const tec = await getLogoByTeam(team.tecsid);
+
+    return `
+        <div class="bgPlayer ${isRight ? 'rgth' : ''}">
+            ${isRight ? `
+                <p class="numberPlayer">${player.numero || 'N/A'}</p>
+
+                <div class="namePlayer rgth">
+                    <h3>${formatFirstName(player.nombre).toUpperCase()}</h3>
+                    <p>${formatLastName(player.nombre)}</p>    
+                </div>
+
+                <img src="${tec.logo || ""}" alt="logo" class="logoPlayer rgth">
+
+                <div class="picPlayer rgth">
+                    <img src="${player.foto || ""}" alt="foto">
+                </div>
+            ` : `
+                <div class=picPlayer>
+                    <img src="${player.foto || ""}" alt="foto">
+                </div>
+
+                <img src="${tec.logo || ""}" alt="logo" class="logoPlayer">
+
+                <div class="namePlayer">
+                    <h3>${formatFirstName(player.nombre).toUpperCase()}</h3>
+                    <p>${formatLastName(player.nombre)}</p>    
+                </div>
+
+                <p class="numberPlayer">${player.numero || 'N/A'}</p>
+            `}
+        </div>
+    `;
+}
+
+function formatFirstName(fullName) {
+    if(!fullName) return 'Jugador';
+    const parts = fullName.split(' ');
+    return parts.length > 3 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
+}
+
+function formatLastName(fullName) {
+    if(!fullName) return 'Sin apellido';
+    const parts = fullName.split(' ');
+    const lastNames = parts.length > 3 ? parts.slice(2) : parts.slice(1);
+    return lastNames.join(' ') || 'Sin apellido';
+}
+
+async function updateTeamPlayers(equipoId) {
+    try {
+        const players = await getPlayersByTeam(equipoId);
+        console.log('Jugadores: ', players);
+        const playerContLeft = document.querySelector('.col.left .listPlayers');
+        const playerContRight = document.querySelector('.col.right .listPlayers');
+
+        playerContLeft.innerHTML = '';
+        playerContRight.innerHTML = '';
+
+        // Dividir jugadores
+        const middleIndex = Math.ceil(players.length / 2);
+        const leftPlayers = players.slice(0, middleIndex);
+        const rightPlayers = players.slice(middleIndex);
+
+        // Renderizar jugadores izquierda / derecha
+        const leftHTML = await Promise.all(
+            leftPlayers.map(player => renderPlayerHTML(player, false))
+        );
+        playerContLeft.innerHTML = leftHTML.join('');
+
+        const rightHTML = await Promise.all(
+            rightPlayers.map(player => renderPlayerHTML(player, true))
+        );
+        playerContRight.innerHTML = rightHTML.join('');
+
+        if(players.length === 0)
+            playerContLeft.innerHTML = '<p>No hay jugadores</p>'
+
+        // Evento de click
+        const list = document.querySelectorAll('.bgPlayer');
+        list.forEach(present => {
+            present.addEventListener('click', () => {
+                present.classList.toggle('clicked');
+            });
+        });
+    } catch(error) {
+        console.log('Error actualizando jugadores: ', error);
+    }
+}
+
 /* ============================= API ============================= */
 async function initializeGroups() {
     try {
+        // Categoría inicial
         const initialCategory = document.querySelector('.teamsM.active') ? 'male' : 'female';
         console.log('Categoría inicial detectada:', initialCategory);
 
@@ -498,6 +703,7 @@ async function initializeGroups() {
             return;
         }
 
+        // Carga y filtrado de grupos
         const groups = await fetchGroups();
         console.log('Grupos obtenidos:', groups);
 
@@ -524,6 +730,12 @@ async function initializeGroups() {
         await updateCardWithData(currentSede);
         await updateCarousel();
 
+        document.querySelector('.groupPrev').addEventListener('click', prevGroup);
+        document.querySelector('.groupNext').addEventListener('click', nextGroup);
+        document.querySelector('.prevPlayer').addEventListener('click', prevTeam);
+        document.querySelector('.nextPlayer').addEventListener('click', nextTeam);
+        await updateGroupTeam();
+
     } catch (error) {
         console.error('Error inicializando grupos:', error);
         currentGroups = [];
@@ -533,10 +745,19 @@ async function initializeGroups() {
 
 
 /* =================== CONSULTAS =================== */
+async function getPlayersByTeam(equipoid) {
+    try {
+        const players = await fetchJugadores();
+        return players.filter(p => p.equipoid === equipoid);
+    } catch(error) {
+        console.error('Error obteniendo jugadores: ', error);
+        return [];
+    }
+}
+
 async function getNearestPoints(canchaid) {
     try {
         const points = await fetchPuntosdeInteres();
-
         return points.filter(p => p.canchaid === canchaid);
     } catch(error) {
         console.error('Error obteniendo puntos cercanos:', error);
@@ -564,10 +785,7 @@ async function getSedeByTitle() {
 
 async function getPointsByTeam(equipoid) {
     try {
-        const response = await fetch('http://localhost:3000/api/clasificacion');
-        if(!response.ok) throw new Error('Error fetching puntos');
-        const points = await response.json();
-
+        const points = await fetchClasificacion();
         return points.find(p => p.equipoid === equipoid);
     } catch (error) {
         console.error('Error obteniendo puntos:', error);
@@ -575,10 +793,19 @@ async function getPointsByTeam(equipoid) {
     }
 }
 
+async function getTeamById(equipoid) {
+    try {
+        const team = await fetchEquipos();
+        return team.find(t => t.id_equipo === equipoid);
+    } catch(error) {
+        console.log('Error obteniendo equipos: ', error);
+        return null;
+    }
+}
+
 async function getLogoByTeam(tecsid) {
     try {
         const tec = await fetchTecs();
-
         return tec.find(t => t.id_tecs === tecsid);
     } catch(error) {
         console.error('Error obteniendo logo:', error);
@@ -588,12 +815,8 @@ async function getLogoByTeam(tecsid) {
 
 async function getTeamsByGroup(grupoid) {
     try {
-        const response = await fetch('http://localhost:3000/api/equipo');
-        if (!response.ok) throw new Error('Error fetching equipos');
-        const teams = await response.json();
-        
+        const teams = await fetchEquipos();
         return teams.filter(t => t.grupoid === grupoid);
-        
     } catch (error) {
         console.error('Error obteniendo equipos:', error);
         return [];
@@ -669,6 +892,17 @@ async function fetchDisciplines() {
     }
 }
 
+async function fetchClasificacion() {
+    try {
+        const response = await fetch('http://localhost:3000/api/clasificacion');
+        if(!response.ok) throw new Error(`Error ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.log('Error fetching clasificacion:', error);
+        return [];
+    }
+}
+
 async function fetchGroups() {
     try {
         const response = await fetch('http://localhost:3000/api/grupos');
@@ -676,6 +910,17 @@ async function fetchGroups() {
         return response.json();
     } catch(error) {
         console.log('Error fetching groups:', error);
+        return [];
+    }
+}
+
+async function fetchEquipos() {    
+    try {
+        const response = await fetch('http://localhost:3000/api/equipo');
+        if(!response.ok) throw new Error(`Error ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.log('Error fetching teams:', error);
         return [];
     }
 }
@@ -705,6 +950,17 @@ async function fetchSedes() {
 async function fetchPuntosdeInteres() {
     try {
         const response = await fetch('http://localhost:3000/api/puntosdeinteres');
+        if(!response.ok) throw new Error(`Error ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.log('Error fetching puntos de interés:', error);
+        return [];
+    }
+}
+
+async function fetchJugadores() {
+    try {
+        const response = await fetch('http://localhost:3000/api/jugador');
         if(!response.ok) throw new Error(`Error ${response.status}`);
         return response.json();
     } catch(error) {
