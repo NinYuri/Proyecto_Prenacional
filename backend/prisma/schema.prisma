@@ -200,11 +200,3 @@ model roles{
   nombre             String
   usuarios           usuarios[]
 }
-
-
-
-
-
-
-
-

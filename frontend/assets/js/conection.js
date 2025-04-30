@@ -1,4 +1,4 @@
-//import AttendanceService from "./attendanceService.js";
+import { AttendanceService } from "./attendanceService.js";
 
 /* ============================= CARGA DE PÁGINA ============================= */
 let currentGroups = [];
@@ -6,7 +6,7 @@ let currentTeams = [];
 let currentGroupIndex = 0;
 let currentTeamIndex = 0;
 let currentSede = null;
-let availableSedes = [];
+let allSedes = [];
 let currentIndex = 0;
 let firstBan = false;
 
@@ -518,7 +518,7 @@ async function updateGroupTeam() {
         currentTeams = await getTeamsByGroup(currentGroup.id_grupo);
         currentTeamIndex = 0;
         console.log('Equipo', currentTeamIndex); 
-        updateTeamLogo();
+        await updateTeamLogo();
     } catch(error) {
         console.error('Error cargando equipos: ', error);
         currentTeams = [];
@@ -602,7 +602,7 @@ async function renderPlayerHTML(player, isRight) {
     const tec = await getLogoByTeam(team.tecsid);
 
     return `
-        <div class="bgPlayer ${isRight ? 'rgth' : ''}">
+        <div class="bgPlayer ${isRight ? 'rgth' : ''}" data-player-id="${player.id_jugador}">
             ${isRight ? `
                 <p class="numberPlayer">${player.numero || 'N/A'}</p>
 
@@ -651,6 +651,7 @@ async function updateTeamPlayers(equipoId) {
     try {
         const players = await getPlayersByTeam(equipoId);
         console.log('Jugadores: ', players);
+        const count = document.querySelector('.countPlayers');
         const playerContLeft = document.querySelector('.col.left .listPlayers');
         const playerContRight = document.querySelector('.col.right .listPlayers');
 
@@ -671,21 +672,62 @@ async function updateTeamPlayers(equipoId) {
         const rightHTML = await Promise.all(
             rightPlayers.map(player => renderPlayerHTML(player, true))
         );
-        playerContRight.innerHTML = rightHTML.join('');
+        playerContRight.innerHTML = rightHTML.join('');        
 
-        if(players.length === 0)
-            playerContLeft.innerHTML = '<p>No hay jugadores</p>'
+        count.innerHTML = `<p>${players.length}</p>`;
+
+        if(players.length === 0) {
+            playerContLeft.innerHTML = '<p>No hay jugadores</p>';
+            count.innerHTML = '<p>-1</p>';
+        }
 
         // Evento de click
-        const list = document.querySelectorAll('.bgPlayer');
-        list.forEach(present => {
-            present.addEventListener('click', () => {
-                present.classList.toggle('clicked');
-            });
-        });
+        setupAttendance();
+        updateAttendanceCounter();        
     } catch(error) {
         console.log('Error actualizando jugadores: ', error);
     }
+}
+
+const setupAttendance = () => {
+    document.querySelectorAll('.bgPlayer').forEach(playerElement => {
+        const playerId = parseInt(playerElement.dataset.playerId);
+
+        const teamId = currentTeams[currentTeamIndex]?.id_equipo;
+        console.log(teamId);
+
+        // Estado inicial
+        playerElement.classList.toggle(
+            'clicked',
+            AttendanceService.getTeamAttendance(teamId).has(playerId)
+        );
+
+        // Click handler
+        playerElement.addEventListener('click', () => {
+            if(!teamId || isNaN(playerId)) return;
+
+            const newState = AttendanceService.markPlayer(teamId, playerId);
+            playerElement.classList.toggle('clicked', newState);
+           
+            console.log('Asistencia actualizada: ', AttendanceService.getTeamAttendance(teamId));
+            updateAttendanceCounter();
+        });
+    });
+};
+
+function updateAttendanceCounter() {       
+    const complete = document.querySelector('.complete');
+    const teamId = currentTeams[currentTeamIndex]?.id_equipo;
+    const total = document.querySelector('.countPlayers p');
+    const present = teamId ? AttendanceService.getTeamAttendance(teamId).size : 0;
+    const players = parseInt(total?.textContent, 10) || 0;
+
+    console.log("Asistentes: ", present, "/", players);
+
+    if(present === players)
+        complete.classList.remove('hidden');
+    else
+        complete.classList.add('hidden');
 }
 
 /* ============================= API ============================= */

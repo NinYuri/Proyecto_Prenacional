@@ -163,6 +163,23 @@
                         </div>                        
                     </div>                    
                 </div>
+
+                <div class="countPlayers"></div>
+
+                <div class="complete hidden">
+                    <div class="checkText">
+                        <svg viewBox="0 0 100 100" class="curved-text">
+                            <path id="circlePath" d="M50,98a40,40 0 0,1 0,-80a40,40 0 0,1 0,80"/>
+                            <text>
+                                <textPath href="#circlePath" startOffset="50%" text-anchor="middle">
+                                    EQUIPO COMPLETO
+                                </textPath>
+                            </text>
+                        </svg>
+
+                        <img src="./assets/images/Check.webp" alt="check">                            
+                    </div>                                                            
+                </div>
             </div>
 
             <div class="col right">
@@ -180,12 +197,28 @@
      </div>
 
     <!-- =================================== SEMIFINALES =================================== -->
-     <div class="semifinals">
+    <div class="semifinals">     
+        <div class="semiLeft">
+            <div class="backRed">
+                <img src="./assets/images/Red.webp" alt="Red">
+            </div>            
+                       
+            <h3>SEMIFINALES</h3>
+            <div class="semiTitle"></div> 
 
-     </div>
+        </div>
+        
+        <div class="semiRight">
+            <div class="semiContainer">
+                
+            </div>
+        </div>
+    </div>
     
+    <!-- ====== Iconos ====== -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    <script src="assets/js/conection.js"></script>
+    <!-- ====== Funcionalidad ====== -->
+    <script type="module" src="assets/js/conection.js"></script>
 </body>
 </html>

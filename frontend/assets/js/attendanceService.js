@@ -1,5 +1,5 @@
 // Servicio encapsulado para manejar la asistencia
-const AttendanceService = (() => {
+export const AttendanceService = (() => {
     const STORAGE_KEY = 'attendance';
 
     // Métodos privados
@@ -33,12 +33,6 @@ const AttendanceService = (() => {
             delete data[teamId];
 
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        },
-
-        exportAttendance: () => {
-            return getAttendanceData();
         }
     };
 })();
-
-export default AttendanceService;
