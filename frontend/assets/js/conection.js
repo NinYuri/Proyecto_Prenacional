@@ -19,12 +19,41 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-/* ============================= QUITAR ACENTOS ============================= */
+/* ============================= FUNCIONES ============================= */
+// Quitar acentos
 function removeAccents(str) {
     return str.normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')    // Elimina diacríticos
             .replace(/ñ/g, 'n')
             .replace(/Ñ/g, 'N');
+}
+
+// Formatear fecha y hora
+function formatearFecha(fechaStr) {
+    const [dia, mes, anio] = fechaStr.split('-');
+    const fecha = new Date(`${mes}/${dia}/${anio}`);
+    
+    const opciones = {
+        day: '2-digit',     // Día con 2 dígitos
+        month: 'long'       // Mes en texto completo
+    };
+    
+    const fechaFormateada = fecha.toLocaleDateString('es-MX', opciones)
+        .replace(' de ', ' DE ')
+        .toUpperCase();
+
+        return fechaFormateada;        
+}
+
+function formatearHora(horaStr) {
+    const [horas24, minutos] = horaStr.split(':');
+    const horas = parseInt(horas24, 10);
+    const sufijo = horas >= 12 ? 'PM' : 'AM';
+    const horas12 = horas % 12 || 12;
+
+    const horaFormateada = `${horas12.toString().padStart(2, '0')}:${minutos} ${sufijo}`;
+
+    return horaFormateada;
 }
 
 /* ============================= GESTIÓN DE MENÚ DINÁMICO ============================= */
@@ -318,10 +347,20 @@ async function renderTeams(teams) {
         const points = await getPointsByTeam(team.id_equipo);
         const point = points || {};
 
+        const ciudad = logo.ciudad;
+        let rutaLogo = logo.logo;
+
+        if(ciudad === 'Puruándiro')
+            rutaLogo = '/frontend/assets/images/Puruándiro.webp'
+        else if(ciudad === 'Purhépecha')
+            rutaLogo = '/frontend/assets/images/Purhépecha.webp'
+
         const teamHTML = `
             <div class="sections teams">
                 <div class="team">
-                    <img src="${logo.logo}" alt="${logo.ciudad}" class="teamLogo">
+                    <div class="teamImg">
+                        <img src="${rutaLogo}" alt="${ciudad}" class="teamLogos">
+                    </div>                    
                     <p class="tec">${team.nombre ? team.nombre : logo.ciudad}</p>
                 </div>
 
@@ -604,7 +643,7 @@ async function renderPlayerHTML(player, isRight) {
     return `
         <div class="bgPlayer ${isRight ? 'rgth' : ''}" data-player-id="${player.id_jugador}">
             ${isRight ? `
-                <p class="numberPlayer">${player.numero || 'N/A'}</p>
+                <p class="numberPlayer rgth">${player.numero || 'N/A'}</p>
 
                 <div class="namePlayer rgth">
                     <h3>${formatFirstName(player.nombre).toUpperCase()}</h3>
@@ -730,6 +769,78 @@ function updateAttendanceCounter() {
         complete.classList.add('hidden');
 }
 
+/* ============================= SEMIFINALES ============================= */
+async function updateSemifinals(disciplinaId) {
+    const container = document.querySelector('.semiContainer');
+
+    try {        
+        const partidos = await getSemifinals(disciplinaId);
+        container.innerHTML = '';
+        
+        if(!partidos || partidos.length === 0) {
+            container.innerHTML = '<p>No hay partidos programados</p>'
+            return;
+        }
+
+        for(const partido of partidos) {
+            try {
+                const [localTeam, guestTeam] = await Promise.all([
+                    getTeamById(partido.equipoLocalid),
+                    getTeamById(partido.equipoVisitid)
+                ]);
+                
+                const [localLogo, guestLogo] = await Promise.all([
+                    getLogoByTeam(localTeam.tecsid),
+                    getLogoByTeam(guestTeam.tecsid)
+                ]);
+
+                const detail = await getPartidosByRol(partido.id_RolDeJuegos);                            
+                const cancha = await getSedeById(detail.canchaid);                
+
+                const partidoHTML = `
+                    <div class="infoCont">
+                        <img src="/frontend/assets/images/Info.webp" alt="Info">
+                        <p>DETALLES</p>
+                    </div>
+
+                    <div class="teamsCont">
+                        <div class="firstTeam">
+                            <div class="imgWrapper">
+                                <img src="${localLogo.logo}" alt="${localLogo.ciudad}">
+                            </div>
+
+                            <p>${removeAccents(localTeam?.nombre) || removeAccents(localLogo.ciudad)}</p>
+                        </div>
+
+                        <div class="dateTime">
+                            <p class="date">${formatearFecha(partido.fecha)}</p>
+                            <p class="time">${formatearHora(partido.hora)}</p>
+                        </div>
+
+                        <div class="secondTeam">
+                            <div class="imgWrapper scnd">
+                                <img src="${guestLogo.logo}" alt="${guestLogo.ciudad}">
+                            </div>
+
+                            <p>${removeAccents(guestTeam?.nombre) || removeAccents(guestLogo.ciudad)}</p>                        
+                        </div>
+                    </div>
+
+                    <div class="canchaCont">
+                        <p>${cancha.nombre}</p>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', partidoHTML);               
+            } catch(error) {
+                console.log('Error cargando semifinales:', error);
+            }
+        }
+    } catch(error) {
+        console.error('Error cargando semifinales:', error);
+    }
+}
+
+
 /* ============================= API ============================= */
 async function initializeGroups() {
     try {
@@ -778,6 +889,10 @@ async function initializeGroups() {
         document.querySelector('.nextPlayer').addEventListener('click', nextTeam);
         await updateGroupTeam();
 
+        const fase = document.querySelector('.semiLeft h3').textContent.trim();
+        console.log('Fase: ', fase);
+        await updateSemifinals(disciplineId);
+
     } catch (error) {
         console.error('Error inicializando grupos:', error);
         currentGroups = [];
@@ -787,6 +902,26 @@ async function initializeGroups() {
 
 
 /* =================== CONSULTAS =================== */
+async function getPartidosByRol(rolid) {
+    try {
+        const partidos = await fetchPartidos();
+        return partidos.find(p => p.rolid === rolid);
+    } catch(error) {
+        console.error('Error obteniendo partidos: ', error);
+        return [];
+    }
+}
+
+async function getSemifinals(disciplinaid) {
+    try {
+        const semifinals = await fetchRoldeJuegos();
+        return semifinals.filter(s => s.disciplinaid === disciplinaid);
+    } catch(error) {
+        console.error('Error obteniendo semifinales: ', error);
+        return [];
+    }
+}
+
 async function getPlayersByTeam(equipoid) {
     try {
         const players = await fetchJugadores();
@@ -803,6 +938,16 @@ async function getNearestPoints(canchaid) {
         return points.filter(p => p.canchaid === canchaid);
     } catch(error) {
         console.error('Error obteniendo puntos cercanos:', error);
+        return [];
+    }
+}
+
+async function getSedeById(canchaid) {
+    try {
+        const canchas = await fetchSedes();
+        return canchas.find(c => c.id_cancha === canchaid);
+    } catch(error) {
+        console.error('Error obteniendo sede por ID:', error);
         return [];
     }
 }
@@ -862,23 +1007,6 @@ async function getTeamsByGroup(grupoid) {
     } catch (error) {
         console.error('Error obteniendo equipos:', error);
         return [];
-    }
-}
-
-async function getGroupId(disciplinaId) {
-    try {
-        const groupName = document.querySelector('.lblGroup h1').textContent.trim();
-        const groups = await fetchGroups();
-        
-        const group = groups.find(g => 
-            g.nombre === groupName && 
-            g.disciplinaid === disciplinaId
-        );
-        
-        return group?.id_grupo || null;
-    } catch (error) {
-        console.error('Error obteniendo grupo:', error);
-        return null;
     }
 }
 
@@ -1007,6 +1135,28 @@ async function fetchJugadores() {
         return response.json();
     } catch(error) {
         console.log('Error fetching puntos de interés:', error);
+        return [];
+    }
+}
+
+async function fetchPartidos() {
+    try {
+        const response = await fetch('http://localhost:3000/api/partido');
+        if(!response.ok) throw new Error(`Error ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.log('Error fetching partidos: ', error);
+        return [];
+    }
+}
+
+async function fetchRoldeJuegos() {
+    try {
+        const response = await fetch('http://localhost:3000/api/roldejuegos');
+        if(!response.ok) throw new Error(`Error ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.log('Error fetching roles de juegos: ', error);
         return [];
     }
 }

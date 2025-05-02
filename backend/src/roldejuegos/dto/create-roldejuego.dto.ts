@@ -7,25 +7,12 @@ export class CreateRoldejuegoDto {
             public disciplinaid: number;
             @IsNumber()
             @Type(() => Number)
-            public equipo1id: number;
+            public equipoLocalid: number;            
             @IsNumber()
             @Type(() => Number)
-            public equipo2id: number;
-            @IsDate()
-            @Type(() => Date)
-            public fecha: Date;
-            @IsNumber()
-            @Type(() => Number)
-            public puntuacionEquipo1: number;
-            @IsNumber()
-            @Type(() => Number)
-            public puntuacionEquipo2: number;
+            public equipoVisitid: number;
             @IsString()
-            public estado: string;
-            @IsNumber()
-            @Type(() => Number)
-            public clasificadoid: number;
-            @IsNumber()
-            @Type(() => Number)
-            public faseTorneoid: number;
+            public fecha: string;
+            @IsString()
+            public hora: string;
 }
