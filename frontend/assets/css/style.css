@@ -79,6 +79,8 @@ ul { list-style: none; }
 
 .navigation li { position: relative; }
 
+.navigation .login { margin-left: auto; }
+
 .navigation li a {
     color: var(--white);
     letter-spacing: 1.5px;
@@ -93,6 +95,11 @@ ul { list-style: none; }
 .navigation li:nth-child(2) a ion-icon {
     width: 15px;
     height: 15px;
+    margin-left: 6px;
+}
+
+.navigation li:nth-child(3) a ion-icon {
+    transform: translateY(13%);
     margin-left: 6px;
 }
 
@@ -764,7 +771,7 @@ header {
 .bgPlayer {
     position: relative;
     width: 100%;
-    height: 70px;
+    height: 60px;
     background-image: linear-gradient(
         to right,
         var(--darkblue) 0%,
@@ -867,13 +874,13 @@ header {
 .bgPlayer .logoPlayer.rgth { margin: 0 0 0 20px; }
 
 .namePlayer { 
-    width: 200px;
+    width: auto;
     text-align: left; 
 }
 
 .namePlayer.rgth { text-align: right; }
 
-.namePlayer h3{ font-size: 40px; }
+.namePlayer h3{ font-size: 30px; }
 
 .namePlayer p { font-size: 20px; }
 
@@ -1048,7 +1055,10 @@ header {
 
 .semiLeft { padding: 90px 0 0 0; }
 
-.semiRight { padding: 30px 0; }
+.semiRight { 
+    padding: 30px 0; 
+    gap: 50px;
+}
 
 .backRed {
     position: absolute;
@@ -1080,13 +1090,23 @@ header {
 }
 
 .semiContainer {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.wrapper {
     display: grid;
     grid-template-rows: 20% 50% 30%;
+    align-items: stretch;
     grid-template-columns: 1fr;
     justify-content: center;
     align-items: center;
     height: 110px;
-    width: 80%;
+    width: 100%;
 }
 
 .infoCont,
@@ -1135,27 +1155,27 @@ header {
 
 .imgWrapper {
     position: absolute;
-    left: -23px;
+    left: -30px;
     top: 5%;
 }
 
 .imgWrapper.scnd {
     left: auto;
-    right: -23px;    
+    right: -30px;    
 }
 
 .imgWrapper img { height: 50px; }
 
 .teamsCont .dateTime {
-    flex-direction: column;
-    padding-top: 2px;
+    padding-top: 1px;
     background-color: var(--darkblue);
     color: var(--white);
+    height: 100%;
 }
 
 .teamsCont .dateTime .date {
     font-family: var(--Koulen);
-    font-size: 19px;
+    font-size: 18px;
 }
 
 .teamsCont .dateTime .time {
@@ -1169,4 +1189,227 @@ header {
     font-family: var(--Koulen);
     font-size: 17px;
     background-color: var(--match_lightblue);
+}
+
+/* ====================== POSICIONES ====================== */
+.positions {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    background-image: url('/frontend/assets/images/Background.webp');
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    overflow: hidden;
+}
+
+.posText {
+    margin: 50px;
+    color: var(--white);
+}
+
+.posTecs {
+    width: 80%;
+    height: 100%;
+    margin-left: auto;
+    display: grid;
+    grid-template-columns: 50% 50%;
+    padding: 30px 15px 30px 0;
+}
+
+.moduleTec {
+    width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: end;
+    gap: 20px;
+}
+
+.modulePos {
+    position: relative;
+    width: 84%;
+    display: flex;
+    align-items: center;
+    font-family: var(--Koulen);
+    font-size: 40px;    
+}
+
+.modulePos:nth-child(1) { transform: translateX(0); }
+.modulePos:nth-child(2) { transform: translateX(-30px); }
+.modulePos:nth-child(3) { transform: translateX(-60px); }
+.modulePos:nth-child(4) { transform: translateX(-90px); }
+.modulePos:nth-child(5) { transform: translateX(-120px); }
+.modulePos:nth-child(6) { transform: translateX(-150px); }
+.modulePos:nth-child(7) { transform: translateX(-180px); }
+
+.numberPos,
+.tecPos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--pos_blue);
+    border: 5px solid var(--black);
+}
+
+.numberPos {
+    width: 90px;
+    height: 83px;
+    border-radius: 100%;
+    font-size: 50px;
+    z-index: 2;
+}
+
+.tecPos {
+    width: 380px;
+    height: 55px;
+    transform: translateX(-10%);
+    padding-left: 10px;
+    z-index: 1;
+}
+
+.imgPos {
+    position: absolute;
+    height: 70px;
+    width: 70px;
+    max-width: 85px;
+    right: 0;
+    z-index: 2;
+}
+
+.imgPos img {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+}
+
+/* ====================== FOOTER ====================== */
+.bfFooter {
+    width: 100%;
+    height: 15px;
+    overflow: hidden;
+}
+
+.footer {
+    width: 100%;
+    height: 380px;
+    background-color: var(--footer);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 19% 27% 27% 27%;
+    padding: 15px 0;
+}
+
+.escudo,
+.emergency,
+.tecnm,
+.itj {
+    width: 100%;
+    height: 100%;
+}
+
+.escudo {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    gap: 9px;
+}
+
+.escudo .tec {
+    transform: translateX(-10%);
+    width: 100px;
+    margin-bottom: 17px;
+}
+
+.escudo .socialLink { 
+    margin-left: 3%;
+    width: 14%;
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    text-decoration: none;
+}
+
+.escudo .facebook,
+.escudo .youtube,
+.escudo .twitter,
+.escudo .insta { 
+    width: 35px; 
+    transition: transform 0.3s ease;
+}
+
+.escudo .socialText {
+    margin-left: 10px;
+    opacity: 0;
+    transform: translateX(-10px);
+    color: var(--white);
+    font-family: var(--Battambang);
+    font-weight: bold;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    white-space: nowrap;
+}
+
+.escudo .socialLink:hover .socialText {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.emergency,
+.tecnm,
+.itj {
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.emergency,
+.tecnm { border-right: 2px solid var(--white); }
+
+.emergPhone {
+    font-family: var(--Battambang);
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.emerPhones,
+.phoneText {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    text-align: start;
+}
+
+.emerPhones {
+    gap: 20px;
+    width: 85%;
+    padding-top: 20px;
+}
+
+.phones {
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    gap: 10px;
+}
+
+.phones img { 
+    width: 23px; 
+    margin-top: 1%;
+}
+
+.phoneText { font-size: 17px; }
+
+.phoneText .phonePeople {
+    font-family: var(--Battambang);
+    font-weight: bold;
+}
+
+.phoneText .phoneNumber { 
+    line-height: 20px; 
+    color: var(--white);
 }

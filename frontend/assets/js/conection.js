@@ -38,9 +38,11 @@ function formatearFecha(fechaStr) {
         month: 'long'       // Mes en texto completo
     };
     
-    const fechaFormateada = fecha.toLocaleDateString('es-MX', opciones)
-        .replace(' de ', ' DE ')
-        .toUpperCase();
+    let fechaFormateada = fecha.toLocaleDateString('es-MX', opciones);
+
+    fechaFormateada = fechaFormateada
+        .toUpperCase()
+        .replace(/\bDE\b/i, ' DE ');  
 
         return fechaFormateada;        
 }
@@ -48,7 +50,7 @@ function formatearFecha(fechaStr) {
 function formatearHora(horaStr) {
     const [horas24, minutos] = horaStr.split(':');
     const horas = parseInt(horas24, 10);
-    const sufijo = horas >= 12 ? 'PM' : 'AM';
+    const sufijo = horas >= 12 ? 'pm' : 'am';
     const horas12 = horas % 12 || 12;
 
     const horaFormateada = `${horas12.toString().padStart(2, '0')}:${minutos} ${sufijo}`;
@@ -89,7 +91,6 @@ function setupMenuInteractions() {
     setupSubmenus('.navigation > li');
     setupSubmenus('.subdiscipline > li');
     setupSubmenus('.options > li');
-    setupGlobalClickHandler();
 }
 
 /* ============================= funciones auxiliares ============================= */
@@ -104,11 +105,19 @@ function getUniqueDisciplines(disciplines) {
 
 // Crear elemento HTML para una disciplina
 function createDisciplineItem(discipline) {
+    const name = discipline.nombre.toUpperCase();
+    let ruta = '#';
+
+    if(name === 'BÁSQUETBOL')
+        ruta = './discBasquet.html';
+    
+    console.log(ruta);
+
     return `
     <li data-discipline-id="${discipline.id_diciplinas}" 
         data-category="${discipline.categoria}">
-        <a href="#" class="menu-link">
-            ${discipline.nombre.toUpperCase()}
+        <a href="${ruta}" class="menu-link">
+            ${name}
             <ion-icon name="caret-forward" class="submenu-icon"></ion-icon>
         </a>
         ${createSubmenuItems(discipline)}
@@ -138,21 +147,34 @@ function setupSubmenus(selector) {
         const submenu = item.querySelector('ul');
         if (!submenu) return;
 
-        item.addEventListener('click', function(e) {
-            if (shouldHandleClick(e, this)) {
-                handleSubmenuClick(e, this);
-            }
+        let hoverTimeout;
+
+        item.addEventListener('mouseenter', (e) => {
+            clearTimeout(hoverTimeout);
+            handleSubmenuHover(item);
         });
+
+        // Cerrar submenú al salir
+        item.addEventListener('mouseleave', () => {
+            hoverTimeout = setTimeout(() => {
+                closeSubmenu(item);
+            }, 300);
+        });
+
+        submenu.addEventListener('mouseenter', () => clearTimeout(hoverTimeout));
+        submenu.addEventListener('mouseleave', () => closeSubmenu(item));
     });
 }
 
-// Manejar clicks en submenús
-function handleSubmenuClick(event, menuItem) {
-    event.preventDefault();
-    event.stopPropagation();
-    
+// Manejar hover
+function handleSubmenuHover(menuItem) {
     closeSiblingSubmenus(menuItem);
-    toggleSubmenu(menuItem);
+    menuItem.classList.add('active');
+}
+
+// Cerrar submenú
+function closeSubmenu(menuItem) {
+    menuItem.classList.remove('active');
 }
 
 // Cerrar otros submenús del mismo nivel
@@ -160,25 +182,10 @@ function closeSiblingSubmenus(currentItem) {
     const parentList = currentItem.closest('ul');
     if (parentList) {
         parentList.querySelectorAll('li').forEach(item => {
-            if (item !== currentItem) {
-                item.classList.remove('active');
-            }
+            if (item !== currentItem)
+                item.classList.remove('active');            
         });
     }
-}
-
-// Alternar estado del submenú
-function toggleSubmenu(menuItem) {
-    menuItem.classList.toggle('active');
-}
-
-// Cerrar todos los menús al hacer click fuera
-function setupGlobalClickHandler() {
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.navigation li').forEach(item => {
-            item.classList.remove('active');
-        });
-    });
 }
 
 // Manejo de errores
@@ -190,13 +197,6 @@ function handleMenuError(error) {
             Error cargando disciplinas
         </li>
     `;
-}
-
-/* ====================== utilidades ====================== */
-function shouldHandleClick(event, element) {
-    return event.target.closest('a') || 
-           event.target.tagName === 'ION-ICON' ||
-           element.contains(event.target);
 }
 
 /* ============================= CAMUFLAJE DEL NAV ============================= */
@@ -246,6 +246,9 @@ document.querySelectorAll('.teamsM, .teamsF').forEach(container => {
         await renderTeams(teams);
 
         await updateGroupTeam();
+
+        // Actualizar semifinales
+        await updateSemifinals(disciplineId);
     });
 });
 
@@ -733,7 +736,6 @@ const setupAttendance = () => {
         const playerId = parseInt(playerElement.dataset.playerId);
 
         const teamId = currentTeams[currentTeamIndex]?.id_equipo;
-        console.log(teamId);
 
         // Estado inicial
         playerElement.classList.toggle(
@@ -798,36 +800,38 @@ async function updateSemifinals(disciplinaId) {
                 const cancha = await getSedeById(detail.canchaid);                
 
                 const partidoHTML = `
-                    <div class="infoCont">
-                        <img src="/frontend/assets/images/Info.webp" alt="Info">
-                        <p>DETALLES</p>
-                    </div>
+                    <div class="wrapper">
+                        <div class="infoCont">
+                            <img src="/frontend/assets/images/Info.webp" alt="Info">
+                            <p>DETALLES</p>
+                        </div>
 
-                    <div class="teamsCont">
-                        <div class="firstTeam">
-                            <div class="imgWrapper">
-                                <img src="${localLogo.logo}" alt="${localLogo.ciudad}">
+                        <div class="teamsCont">
+                            <div class="firstTeam">
+                                <div class="imgWrapper">
+                                    <img src="${localLogo.logo}" alt="${localLogo.ciudad}">
+                                </div>
+
+                                <p>${removeAccents(localTeam?.nombre) || removeAccents(localLogo.ciudad)}</p>
                             </div>
 
-                            <p>${removeAccents(localTeam?.nombre) || removeAccents(localLogo.ciudad)}</p>
-                        </div>
-
-                        <div class="dateTime">
-                            <p class="date">${formatearFecha(partido.fecha)}</p>
-                            <p class="time">${formatearHora(partido.hora)}</p>
-                        </div>
-
-                        <div class="secondTeam">
-                            <div class="imgWrapper scnd">
-                                <img src="${guestLogo.logo}" alt="${guestLogo.ciudad}">
+                            <div class="dateTime">
+                                <p class="date">${formatearFecha(partido.fecha)}</p>
+                                <p class="time">${formatearHora(partido.hora)}</p>
                             </div>
 
-                            <p>${removeAccents(guestTeam?.nombre) || removeAccents(guestLogo.ciudad)}</p>                        
-                        </div>
-                    </div>
+                            <div class="secondTeam">
+                                <div class="imgWrapper scnd">
+                                    <img src="${guestLogo.logo}" alt="${guestLogo.ciudad}">
+                                </div>
 
-                    <div class="canchaCont">
-                        <p>${cancha.nombre}</p>
+                                <p>${removeAccents(guestTeam?.nombre) || removeAccents(guestLogo.ciudad)}</p>                        
+                            </div>
+                        </div>
+
+                        <div class="canchaCont">
+                            <p>${cancha.nombre}</p>
+                        </div>
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', partidoHTML);               
@@ -840,6 +844,97 @@ async function updateSemifinals(disciplinaId) {
     }
 }
 
+/* ============================= POSICIONES ============================= */
+async function updatePositions(disciplineId) {
+    const teams = await getTeamsByDiscipline(disciplineId);
+
+    // Obtener puntos para cada equipo
+    const teamsWithPoints = await Promise.all(
+        teams.map(async team => {
+            const points = await getPointsByTeam(team.id_equipo);
+            return {
+                ...team,
+                puntosTotales: points?.puntosTotales || 0,
+                diferenciaPuntos: points?.diferenciaPuntos || 0,
+                puntosAFavor: points?.puntosAFavor || 0
+            };
+        })
+    );
+
+    // Ordenar según criterios
+    const sortedTeams = teamsWithPoints.sort((a, b) => {
+        // Puntos totales
+        if(b.puntosTotales !== a.puntosTotales)
+            return b.puntosTotales - a.puntosTotales;
+
+        // Diferencia de puntos
+        if(b.diferenciaPuntos !== a.diferenciaPuntos)
+            return b.diferenciaPuntos - a.diferenciaPuntos;
+
+        // Puntos a favor
+        return b.puntosAFavor - a.puntosAFavor;
+    });
+
+    return sortedTeams.map((team, index) => ({
+        ...team,
+        posicion: index + 1
+    }));
+}
+
+async function positionsHTML(disciplineId) {
+    const containerL = document.querySelector('.moduleTec:not(.rht)');
+    const containerR = document.querySelector('.moduleTec.rht')    
+
+    try {
+        const teams = await updatePositions(disciplineId);
+
+        containerL.innerHTML = '';
+        containerR.innerHTML = '';
+
+        if(!teams || teams.length === 0) {
+            containerR.innerHTML = '<p>No hay posiciones aún</p>'
+            return;
+        }
+
+        const middleIndex = Math.ceil(teams.length / 2);
+        const leftPos = teams.slice(0, middleIndex);
+        const rightPos = teams.slice(middleIndex);
+
+        const createElement = async(team, position) => {
+            try {
+                const tec = await getLogoByTeam(team.tecsid);
+
+                return `
+                    <div class="modulePos">
+                        <div class="numberPos">${position}</div>
+                        <div class="tecPos">${removeAccents(team?.nombre) || removeAccents(tec.ciudad)}</div>
+                        <div class="imgPos"><img src="${tec.logo}" alt="Logo"></div>
+                    </div>
+                `;                
+            } catch(error) {
+                console.error('Error obteniendo posiciones:', error);
+                return '';
+            }
+        };
+
+        // Columna izquierda
+        for(let i = 0; i < leftPos.length; i++) {
+            const team = leftPos[i];
+            const position = i + 1;
+            const html = await createElement(team, position);
+            containerL.insertAdjacentHTML('beforeend', html);
+        }
+        // Columna derecha
+        for(let i = 0; i < rightPos.length; i++) {
+            const team = rightPos[i];
+            const position = middleIndex + i + 1;
+            const html = await createElement(team, position);
+            containerR.insertAdjacentHTML('beforeend', html);
+        }
+    } catch(error) {
+        console.error('Error obteniendo posiciones:', error);
+    }
+}
 
 /* ============================= API ============================= */
 async function initializeGroups() {
@@ -889,9 +984,9 @@ async function initializeGroups() {
         document.querySelector('.nextPlayer').addEventListener('click', nextTeam);
         await updateGroupTeam();
 
-        const fase = document.querySelector('.semiLeft h3').textContent.trim();
-        console.log('Fase: ', fase);
         await updateSemifinals(disciplineId);
+
+        await positionsHTML(disciplineId);
 
     } catch (error) {
         console.error('Error inicializando grupos:', error);
@@ -966,6 +1061,16 @@ async function getSedeByTitle() {
         return allSedes.filter(s => s.tipo.toUpperCase() === typeMap[type]);        
     } catch(error) {
         console.error('Error obteniendo sede por título:', error);
+        return [];
+    }
+}
+
+async function getTeamsByDiscipline(disciplineId) {
+    try {
+        const teams = await fetchEquipos();
+        return teams.filter(t => t.diciplinaid === disciplineId);
+    } catch(error) {
+        console.error('Error obteniendo puntos:', error);
         return [];
     }
 }

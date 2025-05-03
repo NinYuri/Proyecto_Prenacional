@@ -107,7 +107,6 @@ function setupMenuInteractions() {
   setupSubmenus('.navigation > li');
   setupSubmenus('.subdiscipline > li');
   setupSubmenus('.options > li');
-  setupGlobalClickHandler();
 }
 
 /* ============================= funciones auxiliares ============================= */
@@ -122,11 +121,19 @@ function getUniqueDisciplines(disciplines) {
 
 // Crear elemento HTML para una disciplina
 function createDisciplineItem(discipline) {
+  const name = discipline.nombre.toUpperCase();
+  let ruta = '#';
+
+  if(name === 'BÁSQUETBOL')
+    ruta = './discBasquet.html';
+    
+  console.log(ruta);
+
   return `
   <li data-discipline-id="${discipline.id_diciplinas}" 
       data-category="${discipline.categoria}">
-      <a href="#" class="menu-link">
-          ${discipline.nombre.toUpperCase()}
+      <a href="${ruta}" class="menu-link">
+          ${name}
           <ion-icon name="caret-forward" class="submenu-icon"></ion-icon>
       </a>
       ${createSubmenuItems(discipline)}
@@ -156,21 +163,34 @@ function setupSubmenus(selector) {
       const submenu = item.querySelector('ul');
       if (!submenu) return;
 
-      item.addEventListener('click', function(e) {
-          if (shouldHandleClick(e, this)) {
-              handleSubmenuClick(e, this);
-          }
+      let hoverTimeout;
+
+      item.addEventListener('mouseenter', (e) => {
+          clearTimeout(hoverTimeout);
+          handleSubmenuHover(item);
       });
+
+      // Cerrar submenú al salir
+      item.addEventListener('mouseleave', () => {
+          hoverTimeout = setTimeout(() => {
+              closeSubmenu(item);
+          }, 300);
+      });
+
+      submenu.addEventListener('mouseenter', () => clearTimeout(hoverTimeout));
+      submenu.addEventListener('mouseleave', () => closeSubmenu(item));
   });
 }
 
-// Manejar clicks en submenús
-function handleSubmenuClick(event, menuItem) {
-  event.preventDefault();
-  event.stopPropagation();
-  
+// Manejar hover
+function handleSubmenuHover(menuItem) {
   closeSiblingSubmenus(menuItem);
-  toggleSubmenu(menuItem);
+  menuItem.classList.add('active');
+}
+
+// Cerrar submenú
+function closeSubmenu(menuItem) {
+  menuItem.classList.remove('active');
 }
 
 // Cerrar otros submenús del mismo nivel
@@ -178,25 +198,10 @@ function closeSiblingSubmenus(currentItem) {
   const parentList = currentItem.closest('ul');
   if (parentList) {
       parentList.querySelectorAll('li').forEach(item => {
-          if (item !== currentItem) {
-              item.classList.remove('active');
-          }
+          if (item !== currentItem)
+              item.classList.remove('active');            
       });
   }
-}
-
-// Alternar estado del submenú
-function toggleSubmenu(menuItem) {
-  menuItem.classList.toggle('active');
-}
-
-// Cerrar todos los menús al hacer click fuera
-function setupGlobalClickHandler() {
-  document.addEventListener('click', () => {
-      document.querySelectorAll('.navigation li').forEach(item => {
-          item.classList.remove('active');
-      });
-  });
 }
 
 // Manejo de errores
@@ -208,13 +213,6 @@ function handleMenuError(error) {
           Error cargando disciplinas
       </li>
   `;
-}
-
-/* ====================== utilidades ====================== */
-function shouldHandleClick(event, element) {
-  return event.target.closest('a') || 
-         event.target.tagName === 'ION-ICON' ||
-         element.contains(event.target);
 }
 
 /* =================== FETCH =================== */
