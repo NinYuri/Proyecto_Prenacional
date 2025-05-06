@@ -10,7 +10,7 @@ let allSedes = [];
 let currentIndex = 0;
 let firstBan = false;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {    
     initializeMenu();
     getImagenesCarousel();
     initializeGroups();
@@ -58,6 +58,14 @@ function formatearHora(horaStr) {
     return horaFormateada;
 }
 
+// Número de teléfono para links
+function normalizePhoneNumber(number) {    
+    if (typeof number !== 'string') {
+        number = String(number ?? '');
+    }
+    return number.replace(/\D/g, '');
+}
+
 /* ============================= GESTIÓN DE MENÚ DINÁMICO ============================= */
 async function initializeMenu() {
     try {
@@ -79,7 +87,7 @@ async function initializeMenu() {
 // Procesar y mostrar disciplinas
 function disciplinesMenu(disciplines) {
     const menuContainer = document.querySelector('.subdiscipline');
-    const uniqueDisciplines = getUniqueDisciplines(disciplines);
+    const uniqueDisciplines = getUniqueDisciplines(disciplines);    
 
     menuContainer.innerHTML = uniqueDisciplines
         .map(discipline => createDisciplineItem(discipline))
@@ -104,39 +112,45 @@ function getUniqueDisciplines(disciplines) {
 }
 
 // Crear elemento HTML para una disciplina
-function createDisciplineItem(discipline) {
+function createDisciplineItem(discipline) {    
+    const pagina = document.querySelector('.discipline h3').textContent.trim().toUpperCase();
     const name = discipline.nombre.toUpperCase();
     let ruta = '#';
 
     if(name === 'BÁSQUETBOL')
         ruta = './discBasquet.html';
-    
-    console.log(ruta);
+    else if(name === 'VOLEIBOL')
+        ruta = './discVolley.html';
 
     return `
     <li data-discipline-id="${discipline.id_diciplinas}" 
         data-category="${discipline.categoria}">
         <a href="${ruta}" class="menu-link">
             ${name}
-            <ion-icon name="caret-forward" class="submenu-icon"></ion-icon>
+            ${name === pagina ? `<ion-icon name="caret-forward" class="submenu-icon"></ion-icon>` : ''}
         </a>
-        ${createSubmenuItems(discipline)}
+        ${name === pagina ? createSubmenuItems() : ''}
     </li>
     `;
 }
 
 // Generar subitems del menú
-function createSubmenuItems(discipline) {
-    const basePath = `/disciplinas/${discipline.id_diciplinas}`;
+function createSubmenuItems() {
+    const groups = document.querySelector('#groups');
+    const sedes = document.querySelector('#sedes');
+    const equipos = document.querySelector('#list');
+    const semifinales = document.querySelector('#semifinals');
+    const finales = document.querySelector('#finals');
+    const posiciones = document.querySelector('#positions');
     
     return `
     <ul class="options">
-        <li><a href="${basePath}/grupos">GRUPOS</a></li>
-        <li><a href="${basePath}/sedes">SEDES</a></li>
-        <li><a href="${basePath}/equipos">EQUIPOS</a></li>
-        <li><a href="${basePath}/semifinales">SEMIFINALES</a></li>
-        <li><a href="${basePath}/finales">FINALES</a></li>
-        <li><a href="${basePath}/posiciones">POSICIONES</a></li>
+        <li><a href="#${groups.id}">GRUPOS</a></li>
+        <li><a href="#${sedes.id}">SEDES</a></li>
+        <li><a href="#${equipos.id}">EQUIPOS</a></li>
+        <li><a href="#${semifinales.id}">SEMIFINALES</a></li>
+        <li><a href="#${finales.id}">FINALES</a></li>
+        <li><a href="#${posiciones.id}">POSICIONES</a></li>
     </ul>
     `;
 }
@@ -149,20 +163,58 @@ function setupSubmenus(selector) {
 
         let hoverTimeout;
 
-        item.addEventListener('mouseenter', (e) => {
-            clearTimeout(hoverTimeout);
-            handleSubmenuHover(item);
+        // Abrir con hover
+        item.addEventListener('mouseenter', () => {
+            if(!item.classList.contains('pinned')) {
+                clearTimeout(hoverTimeout);
+                handleSubmenuHover(item);
+            }
         });
 
         // Cerrar submenú al salir
         item.addEventListener('mouseleave', () => {
-            hoverTimeout = setTimeout(() => {
-                closeSubmenu(item);
-            }, 300);
+            if(!item.classList.contains('pinned')) {
+                hoverTimeout = setTimeout(() => closeSubmenu(item), 300);
+            }
         });
 
         submenu.addEventListener('mouseenter', () => clearTimeout(hoverTimeout));
-        submenu.addEventListener('mouseleave', () => closeSubmenu(item));
+        submenu.addEventListener('mouseleave', () => {
+            if (!item.classList.contains('pinned'))
+                closeSubmenu(item);        
+        });
+
+        // Abrir / cerrar con click
+        const link = item.querySelector('a');
+        if(link) {
+            link.addEventListener('click', (e) => {
+                if(!submenu) return;
+                e.preventDefault();
+                const isPinned = item.classList.contains('pinned');
+
+                submenu.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        closeAllSubmenus(); // Cierra menú al seleccionar opción
+                    });
+                });
+
+                // Cerrar los demás submenús
+                document.querySelectorAll(selector).forEach(otherItem => {
+                    otherItem.classList.remove('pinned', 'active');
+                });
+
+                if(!isPinned)
+                    item.classList.add('pinned', 'active');
+                else
+                    item.classList.remove('pinned', 'active');
+            });
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        const clickedInsideMenu = e.target.closest('li');
+        if(!clickedInsideMenu)
+            closeAllSubmenus();
     });
 }
 
@@ -188,6 +240,13 @@ function closeSiblingSubmenus(currentItem) {
     }
 }
 
+// Cerrar al hacer click fuera de él
+function closeAllSubmenus() {
+    document.querySelectorAll('li.active, li.pinned').forEach(item => {
+        item.classList.remove('active', 'pinned');
+    });
+}
+
 // Manejo de errores
 function handleMenuError(error) {
     console.error('Error en el menú:', error);
@@ -208,8 +267,10 @@ window.addEventListener('scroll', () => {
     const currentScrollY = window.pageYOffset;
 
     // Ocultar al bajar
-    if(currentScrollY > lastScrollY && currentScrollY > scrollThreshold)
+    if(currentScrollY > lastScrollY && currentScrollY > scrollThreshold) {
         navBar.classList.add('scrolled');
+        closeAllSubmenus();
+    }
     else
         navBar.classList.remove('scrolled');
 
@@ -240,15 +301,20 @@ document.querySelectorAll('.teamsM, .teamsF').forEach(container => {
         currentGroups = groups.filter(g => g.disciplinaid === disciplineId);
         console.log('Grupos filtrados:', currentGroups);
         currentGroupIndex = 0;
-        updateGroupNavigation(); // Actualiza la UI inmediatamente
+        updateGroupNavigation();
         const teams = await getTeamsByGroup(currentGroups[currentGroupIndex]?.id_grupo);
         console.log('Equipos del grupo: ', teams);
         await renderTeams(teams);
-
         await updateGroupTeam();
 
-        // Actualizar semifinales
-        await updateSemifinals(disciplineId);
+        // Actualizar semifinales y finales
+        await updatePhase(disciplineId);
+        await positionsHTML(disciplineId);
+
+        // Desplazar al anchor de grupos
+        const anchor = document.querySelector('#groups');
+        if(anchor)
+            anchor.scrollIntoView({ behavior: 'smooth' });
     });
 });
 
@@ -306,6 +372,7 @@ function updateGroupNavigation() {
 
     if(currentGroups.length === 0) {
         groupName.textContent = 'No hay grupos disponibles';
+        groupName.style.fontSize = '2rem';
         prevArrow.style.display = 'none';
         nextArrow.style.display = 'none';
         return;
@@ -397,7 +464,9 @@ async function renderTeams(teams) {
 
 /* ============================= CARD DE SEDES ============================= */
 async function updateCardWithData(sede) {
-    const card = document.querySelector('.cardHolder');
+    const card = document.querySelector('.cardHolder');    
+    const titleElement = document.querySelector('.sedesTitles h3');    
+    const options = document.querySelector('.sedesOptions');
 
     card.querySelector('.cardTitle').textContent = removeAccents(sede.nombre);
     card.querySelector('img').src = sede.imagen;
@@ -416,17 +485,118 @@ async function updateCardWithData(sede) {
     // Link Restaurantes
     try {
         const nearbyPoints = await getNearestPoints(sede.id_cancha);
-        const restaurants = nearbyPoints.filter(p => p.tipo === 'Restaurante');
+        const restaurants = nearbyPoints.filter(p => p.tipo.toUpperCase() === 'RESTAURANTE');
 
         if(restaurants.length > 0) {
             const restaurantLink = document.createElement('a');
             restaurantLink.href = `#`;
             restaurantLink.innerHTML = '<img src="/frontend/assets/images/Rest.webp" alt="Restaurantes">Restaurantes Cercanos';
-            linksContainer.appendChild(restaurantLink);
+            
+            restaurantLink.addEventListener('click', async(e) => {
+                e.preventDefault();                
+
+                const prevTitle = titleElement.textContent.trim();
+                const newTitle = 'RESTAURANTES';
+
+                titleElement.classList.add('animating-down');
+                
+                // Insertar opción de volver a Canchas con animación
+                options.innerHTML = `<p class="animating-up">${prevTitle}</p>`
+                const backOption = options.querySelector('p');
+
+                setTimeout(async () => {
+                    titleElement.textContent = newTitle;
+                    backOption.textContent = prevTitle;
+
+                    titleElement.classList.remove('animating-down');
+                    backOption.classList.remove('animating-up');
+
+                    document.querySelectorAll('.sedesOptions p').forEach(p => p.classList.remove('active'));
+                    backOption.classList.add('active');
+
+                    backOption.addEventListener('click', async () => {
+                        // Revertir a estado anterior
+                        titleElement.classList.add('animating-down');
+                        backOption.classList.add('animating-up');
+
+                        setTimeout(async () => {
+                            titleElement.textContent = prevTitle;
+                            console.log(titleElement);
+                            options.innerHTML = `
+                                <p>HOSPITALES</p>
+                                <div class="first"></div>                
+                                <p>HOTELES</p>
+                            `                   
+                            titleElement.classList.remove('animating-down');
+                            options.classList.remove('animating-up');
+                            
+                            const sedes = await getSedeByTitle();
+                            if(!sedes || sedes.length === 0) return;
+
+                            currentSede = sedes[0];
+                            currentIndex = 0;
+                            firstBan = false;
+
+                            updateCardWithData(currentSede);
+                            await updateCarousel();
+                            setupSedesControl();
+                        }, 300);
+                    });
+
+                    // Mostrar restaurante
+                    currentSede = restaurants[0];
+                    currentIndex = 0;
+                    firstBan = false;
+                    updateCardRestaurant(currentSede);
+                    await updateCarousel();
+                }, 300);                
+            });
+
+            linksContainer.appendChild(restaurantLink);            
         }
     } catch(error) {
         console.error('Error cargando restaurantes: ', error);
     }
+    
+    // Link Teléfono
+    if(sede.tipo === 'Hotel' || sede.tipo === 'Hospital') {
+        const telephoneLink = document.createElement('a');
+        telephoneLink.href = `tel:${normalizePhoneNumber(sede.telefono)}`;
+        telephoneLink.innerHTML = `<img src="/frontend/assets/images/Phone.webp" alt="Telefono">${sede.telefono}`;
+        linksContainer.appendChild(telephoneLink);
+    }
+}
+
+function updateCardRestaurant(restaurant) {
+    const card = document.querySelector('.cardHolder');    
+
+    card.querySelector('.cardTitle').textContent = removeAccents(restaurant.nombre);
+    card.querySelector('img').src = restaurant.imagen;
+    card.querySelector('.cardUb p').textContent = restaurant.ubicacion;
+
+    // Actualizar links con datos reales
+    const linksContainer = card.querySelector('.cardLinks');
+    linksContainer.innerHTML = '';
+
+    // Link Encontrar
+    const mapLink = document.createElement('a');
+    mapLink.href = restaurant.mapa;
+    mapLink.innerHTML = '<img src="/frontend/assets/images/Location.webp" alt="Ubicacion">Encontrar';
+    linksContainer.appendChild(mapLink);
+
+    // Link Teléfono
+    const telephoneLink = document.createElement('a');
+    telephoneLink.href = `tel:${normalizePhoneNumber(restaurant.telefono)}`;
+    telephoneLink.innerHTML = `<img src="/frontend/assets/images/Phone.webp" alt="Telefono">${restaurant.telefono}`;
+    linksContainer.appendChild(telephoneLink);
+
+    // Link Horario
+    const horarioLink = document.createElement('a');
+    horarioLink.href = '#';
+    horarioLink.innerHTML = `<img src="/frontend/assets/images/Hour.webp" alt="Telefono">${restaurant.horarioAtencion}`;
+    horarioLink.style.cursor = 'default';
+    horarioLink.style.pointerEvents = 'none';
+    linksContainer.appendChild(horarioLink);
 }
 
 async function updateCarousel() {
@@ -559,7 +729,6 @@ async function updateGroupTeam() {
     try {
         currentTeams = await getTeamsByGroup(currentGroup.id_grupo);
         currentTeamIndex = 0;
-        console.log('Equipo', currentTeamIndex); 
         await updateTeamLogo();
     } catch(error) {
         console.error('Error cargando equipos: ', error);
@@ -772,75 +941,86 @@ function updateAttendanceCounter() {
 }
 
 /* ============================= SEMIFINALES ============================= */
-async function updateSemifinals(disciplinaId) {
-    const container = document.querySelector('.semiContainer');
+async function updatePhase(disciplinaId) {
+    const secciones = document.querySelectorAll('.semifinals');
 
-    try {        
-        const partidos = await getSemifinals(disciplinaId);
-        container.innerHTML = '';
-        
-        if(!partidos || partidos.length === 0) {
-            container.innerHTML = '<p>No hay partidos programados</p>'
-            return;
-        }
+    for(const seccion of secciones) {
+        const container = seccion.querySelector('.semiContainer');
+        let fase = seccion.querySelector('.semiLeft h3').textContent.trim();
+        fase = fase === 'SEMIFINALES' ? 'SEMIFINAL' : 'FINAL';
+    
+        try {        
+            const partidos = await getPartidosByFase(fase);         
+            const partidosFiltrados = partidos.filter(
+                p => p.rol && p.rol.disciplinaid === disciplinaId
+            );
 
-        for(const partido of partidos) {
-            try {
-                const [localTeam, guestTeam] = await Promise.all([
-                    getTeamById(partido.equipoLocalid),
-                    getTeamById(partido.equipoVisitid)
-                ]);
-                
-                const [localLogo, guestLogo] = await Promise.all([
-                    getLogoByTeam(localTeam.tecsid),
-                    getLogoByTeam(guestTeam.tecsid)
-                ]);
-
-                const detail = await getPartidosByRol(partido.id_RolDeJuegos);                            
-                const cancha = await getSedeById(detail.canchaid);                
-
-                const partidoHTML = `
-                    <div class="wrapper">
-                        <div class="infoCont">
-                            <img src="/frontend/assets/images/Info.webp" alt="Info">
-                            <p>DETALLES</p>
-                        </div>
-
-                        <div class="teamsCont">
-                            <div class="firstTeam">
-                                <div class="imgWrapper">
-                                    <img src="${localLogo.logo}" alt="${localLogo.ciudad}">
-                                </div>
-
-                                <p>${removeAccents(localTeam?.nombre) || removeAccents(localLogo.ciudad)}</p>
-                            </div>
-
-                            <div class="dateTime">
-                                <p class="date">${formatearFecha(partido.fecha)}</p>
-                                <p class="time">${formatearHora(partido.hora)}</p>
-                            </div>
-
-                            <div class="secondTeam">
-                                <div class="imgWrapper scnd">
-                                    <img src="${guestLogo.logo}" alt="${guestLogo.ciudad}">
-                                </div>
-
-                                <p>${removeAccents(guestTeam?.nombre) || removeAccents(guestLogo.ciudad)}</p>                        
-                            </div>
-                        </div>
-
-                        <div class="canchaCont">
-                            <p>${cancha.nombre}</p>
-                        </div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', partidoHTML);               
-            } catch(error) {
-                console.log('Error cargando semifinales:', error);
+            container.innerHTML = '';
+            if(!partidosFiltrados || partidosFiltrados.length === 0) {
+                container.innerHTML = '<p>No hay partidos programados</p>'
+                return;
             }
+
+            for(const partido of partidosFiltrados) {
+                try {
+                    const { rol } = partido;
+                    const [localTeam, guestTeam] = await Promise.all([
+                        getTeamById(rol.equipoLocalid),
+                        getTeamById(rol.equipoVisitid)
+                    ]);
+                
+                    const [localLogo, guestLogo] = await Promise.all([
+                        getLogoByTeam(localTeam.tecsid),
+                        getLogoByTeam(guestTeam.tecsid)
+                    ]);
+
+                    const cancha = await getSedeById(partido.canchaid); 
+                    const teamName = (team, logo) => 
+                        removeAccents(team?.nombre) || removeAccents(logo.ciudad);               
+
+                    const partidoHTML = `
+                        <div class="wrapper">
+                            <div class="infoCont">
+                                <img src="/frontend/assets/images/Info.webp" alt="Info">
+                                <p>DETALLES</p>
+                            </div>
+
+                            <div class="teamsCont">
+                                <div class="firstTeam">
+                                    <div class="imgWrapper">
+                                        <img src="${localLogo.logo}" alt="${localLogo.ciudad}">
+                                    </div>
+
+                                    <p>${teamName(localTeam, localLogo)}</p>
+                                </div>
+
+                                <div class="dateTime">
+                                    <p class="date">${formatearFecha(rol.fecha)}</p>
+                                    <p class="time">${formatearHora(rol.hora)}</p>
+                                </div>
+
+                                <div class="secondTeam">
+                                    <div class="imgWrapper scnd">
+                                        <img src="${guestLogo.logo}" alt="${guestLogo.ciudad}">
+                                    </div>
+
+                                    <p>${teamName(guestTeam, guestLogo)}</p>                        
+                                </div>
+                            </div>
+
+                            <div class="canchaCont">
+                                <p>${cancha.nombre}</p>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', partidoHTML);               
+                } catch(error) {
+                    console.log('Error cargando semifinales:', error);
+                }
+            }        
+        } catch(error) {
+            console.error('Error cargando semifinales:', error);
         }
-    } catch(error) {
-        console.error('Error cargando semifinales:', error);
     }
 }
 
@@ -982,9 +1162,9 @@ async function initializeGroups() {
         document.querySelector('.groupNext').addEventListener('click', nextGroup);
         document.querySelector('.prevPlayer').addEventListener('click', prevTeam);
         document.querySelector('.nextPlayer').addEventListener('click', nextTeam);
-        await updateGroupTeam();
+        await updateGroupTeam();        
 
-        await updateSemifinals(disciplineId);
+        await updatePhase(disciplineId);
 
         await positionsHTML(disciplineId);
 
@@ -997,22 +1177,21 @@ async function initializeGroups() {
 
 
 /* =================== CONSULTAS =================== */
-async function getPartidosByRol(rolid) {
+async function getPartidosByFase(fase) {
     try {
-        const partidos = await fetchPartidos();
-        return partidos.find(p => p.rolid === rolid);
+        const [partidos, roles] = await Promise.all([
+            fetchPartidos(),
+            fetchRoldeJuegos()
+        ]);
+        
+        return partidos
+            .filter(p => p.fase.toUpperCase() === fase)
+            .map(p => {
+                const rol = roles.find(r => r.id_RolDeJuegos === p.rolid);
+                return { ...p, rol };
+            });
     } catch(error) {
         console.error('Error obteniendo partidos: ', error);
-        return [];
-    }
-}
-
-async function getSemifinals(disciplinaid) {
-    try {
-        const semifinals = await fetchRoldeJuegos();
-        return semifinals.filter(s => s.disciplinaid === disciplinaid);
-    } catch(error) {
-        console.error('Error obteniendo semifinales: ', error);
         return [];
     }
 }

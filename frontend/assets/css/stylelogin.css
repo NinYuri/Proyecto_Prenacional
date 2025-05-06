@@ -63,23 +63,20 @@ ul { list-style: none; }
     font-weight: 50 !important;
 }
 
-.colored-toast .swal2-title {
-    
-    font-weight: bold;
-}
+.colored-toast .swal2-title { font-weight: bold; }
 
 /* ====================== NAV ====================== */
 .navigation {
     position: fixed;
     top: 0;
     left: 0;
+    display: flex;
     width: 100%;
     padding: 21px 35px;
     background-color: var(--nav);
     opacity: 95%;
     font-family: var(--Koulen);
-    font-size: 28px;
-    display: flex;
+    font-size: 1.75rem;
     transition: transform 0.3s ease;
     z-index: 99;
 }
@@ -90,6 +87,13 @@ ul { list-style: none; }
 }
 
 .navigation li { position: relative; }
+
+.navigation .preLogo {
+    position: absolute;
+    top: -30%;
+    height: 5.3rem;
+    transform: translateX(215%);
+}
 
 .navigation .login { margin-left: auto; }
 
@@ -110,10 +114,12 @@ ul { list-style: none; }
     margin-left: 6px;
 }
 
-.navigation li:nth-child(3) a ion-icon {
+.navigation li:nth-child(4) a ion-icon {
     transform: translateY(13%);
     margin-left: 6px;
 }
+
+.navigation li:last-child a { margin-right: 0; }
 
 .navigation li ul {
     display: none;
@@ -132,8 +138,11 @@ ul { list-style: none; }
     margin-left: -20px;
 }
 
-.navigation li.active > ul { display: block; }
-
+.navigation li.active > ul {
+    display: block;
+    text-align: center;
+}
+    
 .subdiscipline li {
     padding: 12px 30px 12px 5px;
     position: relative;

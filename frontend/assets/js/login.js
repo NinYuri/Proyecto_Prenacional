@@ -126,6 +126,8 @@ function createDisciplineItem(discipline) {
 
   if(name === 'BÁSQUETBOL')
     ruta = './discBasquet.html';
+  else if(name === 'VOLEIBOL')
+    ruta = './discVolley.html';
     
   console.log(ruta);
 
@@ -134,26 +136,8 @@ function createDisciplineItem(discipline) {
       data-category="${discipline.categoria}">
       <a href="${ruta}" class="menu-link">
           ${name}
-          <ion-icon name="caret-forward" class="submenu-icon"></ion-icon>
       </a>
-      ${createSubmenuItems(discipline)}
   </li>
-  `;
-}
-
-// Generar subitems del menú
-function createSubmenuItems(discipline) {
-  const basePath = `/disciplinas/${discipline.id_diciplinas}`;
-  
-  return `
-  <ul class="options">
-      <li><a href="${basePath}/grupos">GRUPOS</a></li>
-      <li><a href="${basePath}/sedes">SEDES</a></li>
-      <li><a href="${basePath}/equipos">EQUIPOS</a></li>
-      <li><a href="${basePath}/semifinales">SEMIFINALES</a></li>
-      <li><a href="${basePath}/finales">FINALES</a></li>
-      <li><a href="${basePath}/posiciones">POSICIONES</a></li>
-  </ul>
   `;
 }
 
@@ -165,20 +149,58 @@ function setupSubmenus(selector) {
 
       let hoverTimeout;
 
-      item.addEventListener('mouseenter', (e) => {
-          clearTimeout(hoverTimeout);
-          handleSubmenuHover(item);
+      // Abrir con hover
+      item.addEventListener('mouseenter', () => {
+          if(!item.classList.contains('pinned')) {
+              clearTimeout(hoverTimeout);
+              handleSubmenuHover(item);
+          }
       });
 
       // Cerrar submenú al salir
       item.addEventListener('mouseleave', () => {
-          hoverTimeout = setTimeout(() => {
-              closeSubmenu(item);
-          }, 300);
+          if(!item.classList.contains('pinned')) {
+              hoverTimeout = setTimeout(() => closeSubmenu(item), 300);
+          }
       });
 
       submenu.addEventListener('mouseenter', () => clearTimeout(hoverTimeout));
-      submenu.addEventListener('mouseleave', () => closeSubmenu(item));
+      submenu.addEventListener('mouseleave', () => {
+          if (!item.classList.contains('pinned'))
+              closeSubmenu(item);        
+      });
+
+      // Abrir / cerrar con click
+      const link = item.querySelector('a');
+      if(link) {
+          link.addEventListener('click', (e) => {
+              if(!submenu) return;
+              e.preventDefault();
+              const isPinned = item.classList.contains('pinned');
+
+              submenu.querySelectorAll('a').forEach(link => {
+                  link.addEventListener('click', () => {
+                      closeAllSubmenus(); // Cierra menú al seleccionar opción
+                  });
+              });
+
+              // Cerrar los demás submenús
+              document.querySelectorAll(selector).forEach(otherItem => {
+                  otherItem.classList.remove('pinned', 'active');
+              });
+
+              if(!isPinned)
+                  item.classList.add('pinned', 'active');
+              else
+                  item.classList.remove('pinned', 'active');
+          });
+      }
+  });
+
+  document.addEventListener('click', (e) => {
+      const clickedInsideMenu = e.target.closest('li');
+      if(!clickedInsideMenu)
+          closeAllSubmenus();
   });
 }
 
@@ -202,6 +224,13 @@ function closeSiblingSubmenus(currentItem) {
               item.classList.remove('active');            
       });
   }
+}
+
+// Cerrar al hacer click fuera de él
+function closeAllSubmenus() {
+  document.querySelectorAll('li.active, li.pinned').forEach(item => {
+      item.classList.remove('active', 'pinned');
+  });
 }
 
 // Manejo de errores
