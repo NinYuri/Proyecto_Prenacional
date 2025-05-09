@@ -121,6 +121,8 @@ function createDisciplineItem(discipline) {
         ruta = './discBasquet.html';
     else if(name === 'VOLEIBOL')
         ruta = './discVolley.html';
+    else if(name === 'FÚTBOL')
+        ruta = './discFutbol.html';
 
     return `
     <li data-discipline-id="${discipline.id_diciplinas}" 

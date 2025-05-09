@@ -35,13 +35,36 @@ function inputValidacion(inputElement) {
 }
 
 // Validación
-form.addEventListener('submit', e=>{
+form.addEventListener('submit', async e=>{
   e.preventDefault();
-  if(user.value.length === 0 || user.value.trim() === '')
-      Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + 'Debes escribir un nombre de usuario.');
-  else
+  
+  console.log("Valor", user.value);
+  console.log("Longitud", user.value.length);
+  console.log("Metodo", await getUserByName(user.value));
+
+  if(user.value.length === 0 || user.value.trim() === '') 
+    Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + 'Debes escribir un nombre de usuario.');
+  else {
+    usuario = await getUserByName(user.value.trim());
+    if(usuario === "")
+      Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + `El usuario ${user.value} no se encuentra registrado.`);
+    else
       if(password.input.value.length === 0)
-          Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + 'Debes escribir una contraseña.');
+        Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + 'Debes escribir una contraseña.');
+      else
+        if(password.input.value != usuario.contrasena)
+          Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + 'La contraseña es incorrecta.');
+        else {
+          if(usuario.nombre === 'AdminBasquet' || usuario.nombre === 'AsisBasquet1' || usuario.nombre === 'AsisBasquet2' || usuario.nombre === 'AsisBasquet3')
+            window.location.href = 'adminBasquet.html';
+          else
+            if(usuario.nombre === 'AdminVolley' || usuario.nombre === 'AsisVolley1' || usuario.nombre === 'AsisVolley2' || usuario.nombre === 'AsisVolley3')
+              window.location.href = 'adminVolley.html';
+            else
+              if(usuario.nombre === 'AdminFutbol' || usuario.nombre === 'AsisFutbol1' || usuario.nombre === 'AsisFutbol2' || usuario.nombre === 'AsisFutbol3')
+                window.location.href = 'adminFutbol.html';
+        }
+  }
 });
 
 /* ========================================== LLAMADAS ========================================== */
@@ -74,7 +97,7 @@ function Toast(icon, titulo) {
     });
   }
 
-/* ========================================== API ========================================== */
+/* ========================================== MENÚ ========================================== */
 async function initializeMenu() {
   try {
       // Cargar disciplinas desde la API
@@ -128,8 +151,8 @@ function createDisciplineItem(discipline) {
     ruta = './discBasquet.html';
   else if(name === 'VOLEIBOL')
     ruta = './discVolley.html';
-    
-  console.log(ruta);
+  else if(name === 'FÚTBOL')
+    ruta = './discFutbol.html';
 
   return `
   <li data-discipline-id="${discipline.id_diciplinas}" 
@@ -244,7 +267,18 @@ function handleMenuError(error) {
   `;
 }
 
-/* =================== FETCH =================== */
+/* ========================================== API ========================================== */
+async function getUserByName(name) {
+  try {
+      const users = await fetchUsers();
+      return users.find(u => u.nombre === name) || "";
+  } catch(error) {
+      console.error('Error obteniendo usuarios:', error);
+      return null;
+  }
+}
+
+/* ========================================== FETCH ========================================== */
 async function fetchDisciplines() {
   try {
       const response = await fetch('http://localhost:3000/api/disciplinas');
@@ -252,6 +286,17 @@ async function fetchDisciplines() {
       return response.json();
   } catch(error) {
       console.error('Error obteniendo disciplinas:', error);
+      return [];
+  }
+}
+
+async function fetchUsers() {
+  try {
+    const response = await fetch('http://localhost:3000/api/user');
+    if(!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+    return response.json();
+  } catch(error) {
+      console.error('Error obteniendo usuarios:', error);
       return [];
   }
 }
