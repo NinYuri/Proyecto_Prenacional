@@ -1,94 +1,10 @@
-/* ========================================== VARIABLES / CARGA DE PÁGINA  ========================================== */
-const form = document.querySelector('.login-form');
-const user = document.getElementById("user");
-const password = { 
-  input: document.getElementById('pass'), 
-  icon: document.querySelector('.icon-lock') 
-};
+/* ========================================== CARGA DE PÁGINA  ========================================== */
+const disciplineName = document.querySelector('.type').textContent.trim();
 
-document.addEventListener("DOMContentLoaded", () => {
-  initializeMenu();
+document.addEventListener("DOMContentLoaded", async () => {
+    await initializeMenu();
+    await newGroup()
 });
-
-/* ========================================== MÉTODOS ========================================== */
-// Visibilidad de contraseñas
-const visibility = () => {
-    password.icon.addEventListener("click", () => {
-        if (password.input.type === "password") {
-            password.input.type = "text";
-            password.icon.innerHTML = '<ion-icon name="lock-open"></ion-icon>';
-        } else {
-            password.input.type = "password";
-            password.icon.innerHTML = '<ion-icon name="lock-closed"></ion-icon>';
-        }
-    });
-};
-
-// Animación de input
-function inputValidacion(inputElement) {
-  inputElement.addEventListener("input", () => {
-      if (inputElement.value.trim() !== "")
-          inputElement.classList.add("valid");
-      else
-          inputElement.classList.remove("valid");      
-  });
-}
-
-// Validación
-form.addEventListener('submit', async e=>{
-  e.preventDefault();
-
-  if(user.value.length === 0 || user.value.trim() === '') 
-    Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + 'Debes escribir un nombre de usuario.');
-  else {
-    const usuario = await getUserByName(user.value.trim());
-    if(usuario === "")
-      Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + `El usuario ${user.value} no se encuentra registrado.`);
-    else
-      if(password.input.value.length === 0)
-        Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + 'Debes escribir una contraseña.');
-      else
-        if(password.input.value != usuario.contrasena)
-          Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + 'La contraseña es incorrecta.');
-        else {
-          try {
-            const res = await fetch('http://localhost:3000/api/auth/login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ nombre: user.value.trim(), contrasena: password.input.value.trim() })
-            });
-
-            if (!res.ok) {
-              const errorMessage = await res.text();
-              throw new Error(`Error ${res.status}: ${errorMessage}`);
-            }
-
-            const data = await res.json();
-            console.log("Token recibido:", data.access_token);
-            localStorage.setItem('token', data.access_token);
-
-            // Redirección por nombre de usuario
-            const nombre = usuario.nombre;
-            if (nombre.startsWith('AdminBasquet') || nombre.startsWith('AsisBasquet'))
-              window.location.href = 'adminBasquet.html';
-            else if (nombre.startsWith('AdminVolley') || nombre.startsWith('AsisVolley'))
-              window.location.href = 'adminVolley.html';
-            else if (nombre.startsWith('AdminFutbol') || nombre.startsWith('AsisFutbol'))
-              window.location.href = 'adminFutbol.html';
-
-          } catch (err) {
-            Toast('error', 'Hubo un problema con el inicio de sesión.\n\n');
-            console.log(err.message);
-          }
-        }
-  }
-});
-
-/* ========================================== LLAMADAS ========================================== */
-
-visibility();
-inputValidacion(user);
-inputValidacion(password.input);
 
 /* ========================================== ALERTA ERROR ========================================== */
 function Toast(icon, titulo) {
@@ -112,7 +28,7 @@ function Toast(icon, titulo) {
       icon: icon,
       title: titulo
     });
-  }
+}
 
 /* ========================================== MENÚ ========================================== */
 async function initializeMenu() {
@@ -285,14 +201,76 @@ function handleMenuError(error) {
 }
 
 /* ========================================== API ========================================== */
-async function getUserByName(name) {
-  try {
-      const users = await fetchUsers();
-      return users.find(u => u.nombre === name) || "";
-  } catch(error) {
-      console.error('Error obteniendo usuarios:', error);
-      return null;
-  }
+async function newGroup() {
+    document.getElementById('saveGroup').addEventListener('click', async () => {
+        const groupName = document.getElementById('name').value.trim();
+        const category = document.getElementById('categoria');
+        const selectedValue = category.value;
+
+        const disciplinaId = await getDisciplineId(selectedValue);
+
+        if(!groupName) {
+            Toast('error', 'Nuevo Grupo' + '\n' + '\n' + 'Debes ingresar un nombre para el grupo.');
+            return;
+        }
+
+        if (/\bgrupo\b/i.test(groupName)) {
+            Toast('error', 'Nuevo Grupo' + '\n' + '\n' + 'Por favor, elimine la palagra Grupo.');
+            return;
+        }
+
+        try {
+            const response = await createGroup({
+                nombre: "Grupo " + groupName,
+                disciplinaid: disciplinaId
+            });
+
+            if(response && response.id_grupo) {
+                Toast('success', 'Nuevo Grupo' + '\n' + '\n' + 'Grupo creado con éxito.')
+                document.getElementById('name').value = '';
+            } else 
+                Toast('error', 'Nuevo Grupo' + '\n' + '\n' + 'Error al crear el grupo.')
+        } catch(error) {
+            console.log('Error', error);
+        }
+    });
+}
+
+async function getDisciplineId(category) {
+    try {        
+        const disciplines = await fetchDisciplines();
+
+        const discipline = disciplines.find(d => 
+            d.nombre === disciplineName && 
+            d.categoria.toLowerCase() === category
+        );
+
+        return discipline?.id_diciplinas || null;        
+    } catch (error) {
+        console.error('Error obteniendo disciplina:', error);
+        return null;
+    }
+}
+
+/* ========================================== POST ========================================== */
+async function createGroup(groupData) {
+    try {
+        const response = await fetch('http://localhost:3000/api/grupos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(groupData)
+        });
+
+        return response.json();
+    } catch(error) {
+        console.error('Error en createGroupInDatabase:', error);
+        return { 
+            success: false, 
+            message: 'Error de conexión con el servidor' 
+        };
+    }
 }
 
 /* ========================================== FETCH ========================================== */
@@ -303,17 +281,6 @@ async function fetchDisciplines() {
       return response.json();
   } catch(error) {
       console.error('Error obteniendo disciplinas:', error);
-      return [];
-  }
-}
-
-async function fetchUsers() {
-  try {
-    const response = await fetch('http://localhost:3000/api/user');
-    if(!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-    return response.json();
-  } catch(error) {
-      console.error('Error obteniendo usuarios:', error);
       return [];
   }
 }

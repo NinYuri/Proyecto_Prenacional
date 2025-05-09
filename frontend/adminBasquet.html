@@ -11,25 +11,97 @@
 </head>
 
 <body>
-    <header>
+    <div class="body">
         <ul class="navigation">
-            <li><a href="#"><ion-icon name="home-sharp"></ion-icon>INICIO</a></li>
-            
-            <li>
-                <a href="#">DISCIPLINAS<ion-icon name="caret-down"></ion-icon></a>
-                <ul class="subdiscipline"></ul>
-            </li>
+                <li><a href="#"><ion-icon name="home-sharp"></ion-icon>INICIO</a></li>
+                
+                <li>
+                    <a href="#">DISCIPLINAS<ion-icon name="caret-down"></ion-icon></a>
+                    <ul class="subdiscipline"></ul>
+                </li>
 
-            <li><img src="./assets/images/Logo Prenacional.webp" alt="logo" class="preLogo"></li>
+                <li><img src="./assets/images/Logo Prenacional.webp" alt="logo" class="preLogo"></li>
 
-            <li class="login"><a href="./login.html">CERRAR SESION<ion-icon name="person-circle-sharp"></ion-icon></a></li>
+                <li class="login"><a href="./login.html">SALIR<ion-icon name="person-circle-sharp"></ion-icon></a></li>
         </ul>
-    </header>
+
+        <div class="options">
+            <div class="option">                
+                <div class="lblOption">   
+                    <h1>GRUPO</h1>                 
+                </div>
+
+                <div class="lblOption">   
+                    <h1>EQUIPO</h1>                 
+                </div>
+
+                <div class="lblOption">   
+                    <h1>JUGADOR</h1>                 
+                </div>
+
+                <div class="lblOption">   
+                    <h1>PARTIDO</h1>                 
+                </div>
+
+                <div class="lblOption">   
+                    <h1>CLASIFICACION</h1>                 
+                </div>
+
+                <div class="lblOption">   
+                    <h1>CANCHA</h1>                 
+                </div>
+
+                <div class="lblOption">   
+                    <h1>RESTAURANTE</h1>                 
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="container">
+                <div class="discipline">
+                    <h3 class="type">Básquetbol</h3>
+                </div>
+
+                <div class="group">
+                    <div class="input-box">           
+                        <p class="title">GRUPO</p>         
+                        <input class="input" id="name" type="text">                                               
+                    </div> 
+
+                    <div class="category">
+                        <p class="title">CATEGORIA</p>      
+                        <select class="input selector" id="categoria">
+                            <option value="femenil">Femenil</option>
+                            <option value="varonil">Varonil</option>
+                        </select>
+                    </div>
+
+                    <button class="btns" id="saveGroup">GUARDAR</button> 
+                </div>   
+                
+                <div class="groupOptions">
+                    <div class="bttnOpt">
+                        <div class="opt"><ion-icon name="add-circle"></ion-icon>AGREGAR</div> 
+                        <div class="opt"><ion-icon name="pencil"></ion-icon>MODIFICAR</div>
+                        <div class="opt"><ion-icon name="search"></ion-icon>BUSCAR</div>          
+                        <div class="opt"><ion-icon name="trash"></ion-icon>ELIMINAR</div>                  
+                    </div>
+
+                    <div class="bttnNm">
+                        <p>Grupo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ====== Iconos ====== -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <!-- ====== Alertas ====== -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- ====== Funcionalidad ====== -->
-    <script type="module" src=""></script>
+    <script type="module" src="./assets/js/admin.js"></script>
 </body>
 </html>

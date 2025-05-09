@@ -56,6 +56,30 @@ body {
 
 ul { list-style: none; }
 
+/* ====================== TOAST ====================== */
+.colored-toast.swal2-icon-error { background-color: var(--darkblue) !important; }
+
+.colored-toast.swal2-icon-success { background-color: var(--darkblue) !important; }
+
+.colored-toast .swal2-title,
+.colored-toast .swal2-close,
+.colored-toast .swal2-html-container {
+    color: white; 
+    font-size: 1.2rem !important;
+    font-weight: 50 !important;
+}
+
+.colored-toast .swal2-title { font-weight: bold; }
+
+/* ====================== CUERPO / DIV ====================== */
+.body {
+    display: grid;
+    grid-template-columns: 20% 80%;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
 /* ====================== NAV ====================== */
 .navigation {
     position: fixed;
@@ -174,3 +198,192 @@ ul { list-style: none; }
 }
 
 .subdiscipline .options li:last-child { border-bottom: none; }
+
+/* ====================== OPCIONES ====================== */
+.options {
+    background-image: url('/frontend/assets/images/Background.webp');
+    background-position: right right;
+    background-repeat: no-repeat;
+    background-size: cover;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.option {
+    height: 80%;    
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding-top: 15%;
+}
+
+.lblOption {
+    position: relative;
+    background-color: var(--white);
+    width: 220px;
+    height: 60px;
+    border-radius: 10px;
+    font-family: var(--Kosugi);
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.lblOption::before,
+.lblOption::after {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 60px;
+    border: 1.5px solid var(--black);
+    border-radius: 10px;
+    pointer-events: none;
+}
+
+.lblOption::before {
+    top: 7px;
+    left: 7px;
+}
+
+.lblOption::after {
+    bottom: 7px;
+    right: 7px;
+}
+
+/* ====================== CONTENIDO / GRUPOS ====================== */
+.content {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 80%;
+    height: 75%;     
+    margin-top: 5%;
+    background: #294B7D30;
+    backdrop-filter: blur(0.4rem);
+    -webkit-backdrop-filter: blur(0.4rem);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 50px;
+}
+
+.discipline {
+    font-family: var(--Alex);
+    font-size: 100px;
+    color: var(--white);
+}
+
+.discipline .type {    
+    font-weight: 100;
+    text-shadow: 6px 3px 0px var(--darkblue);
+}
+
+.group {
+    width: 65%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.input-box,
+.category {
+    position: relative;
+    width: 100%;
+    height: 60px;
+    border-bottom: 2px solid var(--black);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.title {
+    position: static;
+    font-size: 2em;
+    flex: 1;
+}
+
+.input {
+    flex: 2;
+    margin: 8px auto 0 50px;
+    width: 70%;
+    height: 70%;
+    background: rgb(41, 75, 125, 0.6);
+    border: none;
+    border-radius: 10px;
+    outline: none;
+    font-size: 1.3em;                        
+    font-weight: 400;
+    color: var(--white);
+    padding: 0 35px 0 10px;
+}
+
+.input.selector {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.btns {
+    position: relative;
+    width: 50%;
+    height: 45px;
+    margin-top: 10%;
+    background-image: linear-gradient(
+        to right,
+        var(--bluecarr) 0%,
+        var(--graycarr) 50%,
+        var(--bluecarr) 100%
+    );
+    border-radius: 10px;
+    outline: none;
+    cursor: pointer;
+    font-size: 1.3em;
+    font-weight: 600;
+    letter-spacing: 3px;
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0.3);
+}
+
+.groupOptions {
+    display: flex;
+    width: 100%;
+    margin-top: auto;
+    border-radius: 20px;
+    font-size: 1em;
+    padding: 0 30px 5px 20px;
+}
+
+.bttnOpt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+    font-family: var(--Koulen);
+    font-weight: lighter;
+}
+
+.opt { cursor: pointer; }
+
+.opt ion-icon {
+    transform: translateY(10%);
+    margin-right: 0.2em;
+}
+
+.bttnNm {
+    margin-left: auto;
+    font-family: var(--Alex);
+    font-size: 3em;
+    color: var(--darkblue);
+}

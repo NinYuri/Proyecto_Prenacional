@@ -11,9 +11,11 @@ import { GruposModule } from './grupos/grupos.module';
 import { PuntosdeinteresModule } from './puntosdeinteres/puntosdeinteres.module';
 import { RoldejuegosModule } from './roldejuegos/roldejuegos.module';
 import { TecsModule } from './tecs/tecs.module';
+import { AuthModule } from './auth/auth.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
-  imports: [ EquipoModule, UserModule, CanchaModule, ClasificacionModule, JugadorModule, PartidoModule, DisciplinasModule, GruposModule, PuntosdeinteresModule, RoldejuegosModule, TecsModule],
+  imports: [ EquipoModule, UserModule, CanchaModule, ClasificacionModule, JugadorModule, PartidoModule, DisciplinasModule, GruposModule, PuntosdeinteresModule, RoldejuegosModule, TecsModule, AuthModule, PrismaModule],
   controllers: [],
   providers: [],
 })

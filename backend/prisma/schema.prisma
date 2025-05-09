@@ -121,8 +121,8 @@ model puntosdeInteres {
 }
 
 model usuarios {
-  id_user        Int   @id @default(autoincrement())
-  nombre         String
+  id_user        Int      @id @default(autoincrement())
+  nombre         String   @unique
   contrasena     String
 }
 
