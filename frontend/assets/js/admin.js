@@ -338,30 +338,68 @@ async function SubOptionE(e) {
     const addBtn = e.target.closest('.opt.Add');
     const modBtn = e.target.closest('.opt.Mod');
     const searBtn = e.target.closest('.opt.Sear');
-    const delBtn = e.target.closest('.opt.Del');
+    const delBtn = e.target.closest('.opt.Del');    
 
     if(addBtn) {
-        container.innerHTML = `
-            <div class="input-box">           
-                <p class="title">NOMBRE</p>         
-                <input class="input" id="name" type="text" value="Dejar vacío de ser necesario">                                               
-            </div> 
+        try {            
+            let category = document.getElementById('categoria')?.value;
+            if(!category) category = 'Femenil';
 
-            <div class="category">
-                <p class="title">CATEGORIA</p>      
-                <select class="input selector" id="categoria">
-                    <option value="Femenil">Femenil</option>
-                    <option value="Varonil">Varonil</option>
-                </select>
-            </div>
+            const discipline = await getDisciplineId(category.toLowerCase());
+            const groups = await getGroupsByDiscID(discipline);
+            const tecs = await getTecs();
 
-            <div class="teamOpt">
-                
-            </div>
+            container.innerHTML = `
+                <div class="category team">
+                    <div class="teamOpt">
+                        <p class="title">NOMBRE</p>
+                        <input class="input selector team" id="name" type="text" placeholder="Opcional">
+                    </div>           
+                        
+                    <div class="teamOpt">
+                        <p class="title">CATEGORIA</p>      
+                        <select class="input selector team" id="categoria">
+                            <option value="Femenil">Femenil</option>
+                            <option value="Varonil">Varonil</option>
+                        </select>
+                    </div>
+                </div> 
 
-            <button class="btns" id="save">GUARDAR</button>
-        `;
-        document.getElementById('save').addEventListener('click', NewGroup);
+                <div class="category team">
+                    <div class="teamOpt">
+                        <p class="title">GRUPO</p>
+                        <select class="input selector team" id="groupTm">
+                            ${groups.map(group => `<option value="${group.id_grupo}">${group.nombre}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="teamOpt">
+                        <p class="title">TEC</p>
+                        <select class="input selector team" id="tecTm">
+                            ${tecs.map(tec => `<option value="${tec.id_tecs}">${tec.nombre}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btns" id="save">GUARDAR</button>
+            `;            
+
+            document.getElementById('save').addEventListener('click', NewTeam);
+
+            // Escuchar cambios en la categoría para actualizar los grupos
+            document.getElementById('categoria').addEventListener('change', async (e) => {
+                const selectedCategory = e.target.value;
+                const disciplineId = await getDisciplineId(selectedCategory.toLowerCase());
+                const updatedGroups = await getGroupsByDiscID(disciplineId);
+
+                const groupSelect = document.getElementById('groupTm');
+                groupSelect.innerHTML = updatedGroups
+                    .map(group => `<option value="${group.id_grupo}">${group.nombre}</option>`)
+                    .join('');
+            });
+        } catch(error){
+            console.log("Error en añadir grupos y tecs: ", error);
+        }
     }
 
     if(modBtn) {
@@ -375,10 +413,8 @@ async function SubOptionE(e) {
 
                 if(!teamName) {                                        
                     const result = await getTecCityByID(team.tecsid);      
-                    console.log(result);              
                     teamName = result.ciudad;                    
                 }
-                console.log(teamName);
                 return `<option value="${team.id_equipo}">${teamName}</option>`;
             });
 
@@ -387,14 +423,110 @@ async function SubOptionE(e) {
             container.innerHTML = `
                 <div class="modify">
                     <p>SELECCIONE EL EQUIPO A MODIFICAR</p>                
-                    <select class="input selector m" id="groupS">
+                    <select class="input selector m" id="teamS">
                         ${optionsHTML}
                     </select>
                 </div>
 
                 <button class="btns" id="select">SELECCIONAR</button> 
             `;
-            document.getElementById('select').addEventListener('click', Select);
+            document.getElementById('select').addEventListener('click', SelectTeam);
+        } catch(error) {
+            console.log('Error', error);
+        }
+    }
+
+    if(searBtn) {
+        try {
+            let category = document.getElementById('categoria')?.value;
+            if(!category) category = 'Femenil';
+
+            const discipline = await getDisciplineId(category.toLowerCase());
+            const groups = await getGroupsByDiscID(discipline);
+            const tecs = await getTecs();
+
+            container.innerHTML = `
+                <div class="category srcTeam">
+                    <div class="modify srcTeam">
+                        <p class="title">EQUIPO QUE DESEA BUSCAR</p>
+                        <input class="input selector srcTeam" id="name" type="text" placeholder="Opcional">
+                    </div>           
+                            
+                    <div class="modify srcTeam">
+                        <p class="title">SELECCIONE SU CATEGORÍA</p>      
+                        <select class="input selector srcTeam" id="categoria">
+                            <option value="Femenil">Femenil</option>
+                            <option value="Varonil">Varonil</option>
+                        </select>
+                    </div>
+                </div> 
+
+                <div class="category srcTeam">
+                        <div class="modify srcTeam">
+                            <p class="title">SELECCIONE SU GRUPO</p>
+                            <select class="input selector srcTeam" id="groupTm">
+                                ${groups.map(group => `<option value="${group.id_grupo}">${group.nombre}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <div class="modify srcTeam">
+                            <p class="title">SELECCIONE EL TEC</p>
+                            <select class="input selector srcTeam" id="tecTm">
+                                ${tecs.map(tec => `<option value="${tec.id_tecs}">${tec.nombre}</option>`).join('')}
+                            </select>
+                        </div>
+                </div>
+
+                <button class="btns srcTeam" id="search">BUSCAR</button>
+            `;
+
+            document.getElementById('search').addEventListener('click', SearchTeam);
+
+            document.getElementById('categoria').addEventListener('change', async (e) => {
+                console.log("Escuchando cambio en categoría");
+                const selectedCategory = e.target.value;
+                const disciplineId = await getDisciplineId(selectedCategory.toLowerCase());
+                const updatedGroups = await getGroupsByDiscID(disciplineId);
+
+                const groupSelect = document.getElementById('groupTm');
+                groupSelect.innerHTML = updatedGroups
+                    .map(group => `<option value="${group.id_grupo}">${group.nombre}</option>`)
+                    .join('');
+            });
+        } catch(error){
+            console.log("Error en añadir grupos y tecs: ", error);
+        }
+    }
+
+    if(delBtn) {
+        const disciplineList = await getDisciplineByName();
+        const ids = disciplineList.map(d => d.id_diciplinas);
+        const teams = await getTeamsByDiscipline(ids);
+
+        try {
+            const optionsPromises = teams.map(async (team) => {
+                let teamName = team.nombre;
+
+                if(!teamName) {                                        
+                    const result = await getTecCityByID(team.tecsid);      
+                    teamName = result.ciudad;                    
+                }
+                return `<option value="${team.id_equipo}">${teamName}</option>`;
+            });
+
+            const optionsHTML = (await Promise.all(optionsPromises)).join('');
+
+            container.innerHTML = `
+                <div class="modify">
+                    <p>SELECCIONE EL EQUIPO A ELIMINAR</p>                
+                    <select class="input selector m" id="teamS">
+                        ${optionsHTML}
+                    </select>
+                </div>
+
+                <button class="btns" id="delete">ELIMINAR</button> 
+            `;
+            document.getElementById('delete').addEventListener('click', DeleteTeam);
         } catch(error) {
             console.log('Error', error);
         }
@@ -408,10 +540,135 @@ async function SubOptionJ(e) {
     const searBtn = e.target.closest('.opt.Sear');
     const delBtn = e.target.closest('.opt.Del');
 
+    if(addBtn) {
+        let category = document.getElementById('categoria')?.value;
+        if(!category) category = 'Femenil';
+
+        const discipline = await getDisciplineId(category.toLowerCase());
+        const teamsList = await getTeamsByDiscID(discipline);
+
+        try {
+            const optionsPromises = teamsList.map(async (team) => {
+                let teamName = team.nombre;
+
+                if(!teamName) {                                        
+                    const result = await getTecCityByID(team.tecsid);      
+                    teamName = result.ciudad;                    
+                }
+                return `<option value="${team.id_equipo}">${teamName}</option>`;
+            });
+
+            const optionsHTML = (await Promise.all(optionsPromises)).join('');
+
+            container.innerHTML = `
+                <div class="input-box play">           
+                    <p class="title">NOMBRE</p>         
+                    <input class="input play" id="name" type="text">                                               
+                </div> 
+
+                <div class="category team play">
+                    <div class="teamOpt">
+                        <p class="title">CATEGORIA</p>
+                        <select class="input selector play" id="categoria">
+                            <option value="Femenil">Femenil</option>
+                            <option value="Varonil">Varonil</option>
+                        </select>
+                    </div>           
+                            
+                    <div class="teamOpt">
+                        <p class="title">EQUIPO</p>      
+                        <select class="input selector play" id="equipo">
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="category team play">
+                    <div class="teamOpt">
+                        <p class="title">NUMERO</p>
+                        <input class="input selector play" id="number" type="text">
+                    </div>           
+                            
+                    <div class="teamOpt">
+                        <p class="title">POSICION</p>      
+                        <input class="input selector play" id="position" type="text">
+                    </div>
+                </div>   
+
+                <button class="btns play" id="save">SUBIR FOTO</button>
+            `;
+            
+            // document.getElementById('select').addEventListener('click', SelectTeam);
+
+            document.getElementById('categoria').addEventListener('change', async (e) => {
+                const selectedCategory = e.target.value;
+                const disciplineId = await getDisciplineId(selectedCategory.toLowerCase());
+                const updatedTeams = await getTeamsByDiscID(disciplineId);
+
+                const optionsPromises = updatedTeams.map(async (team) => {
+                    let teamName = team.nombre;
+
+                    if (!teamName) {
+                        const result = await getTecCityByID(team.tecsid);
+                        teamName = result.ciudad;
+                    }
+
+                    return `<option value="${team.id_equipo}">${teamName}</option>`;
+                });
+                const optionsHTML = (await Promise.all(optionsPromises)).join('');
+
+                const teamSelect = document.getElementById('equipo');
+                teamSelect.innerHTML = optionsHTML;
+            });
+        } catch(error) {
+            console.log('Error', error);
+        }
+    }
+
     if(modBtn) {
         const disciplineList = await getDisciplineByName();
         const ids = disciplineList.map(d => d.id_diciplinas);
-        const groups = await getGroupsByDiscipline(ids);
+
+        const teamsList = await getTeamsByDiscipline(ids);
+        const idsT = teamsList.map(t => t.id_equipo);
+
+        const players = await getPlayersByTeams(idsT);
+
+        container.innerHTML = `
+            <div class="modify">
+                <p>SELECCIONE EL JUGADOR A MODIFICAR</p>                
+                <select class="input selector m" id="playerS">
+                    ${players.map(player => `<option value="${player.id_jugador}">${player.nombre}</option>`).join('')}
+                </select>
+            </div>
+
+            <button class="btns" id="select">SELECCIONAR</button> 
+        `;
+
+        //document.getElementById('select').addEventListener('click');
+    }
+
+    if(delBtn) {
+        const disciplineList = await getDisciplineByName();
+        const ids = disciplineList.map(d => d.id_diciplinas);
+
+        const teamsList = await getTeamsByDiscipline(ids);
+        const idsT = teamsList.map(t => t.id_equipo);
+
+        const players = await getPlayersByTeams(idsT);
+
+        container.innerHTML = `
+            <div class="modify">
+                <p>SELECCIONE EL JUGADOR A ELIMINAR</p>                
+                <select class="input selector m" id="playerS">
+                    ${players.map(player => `<option value="${player.id_jugador}">${player.nombre}</option>`).join('')}
+                </select>
+            </div>
+
+            <button class="btns" id="delete">ELIMINAR</button> 
+        `;
+
+        //document.getElementById('delete').addEventListener('click');
     }
 }
 
@@ -444,13 +701,51 @@ async function NewGroup() {
             disciplinaid: disciplinaId
         });
 
-        console.log(response);
-
         if(response && response.id_grupo) {
-            Toast('success', `Nuevo ${option}` + '\n' + '\n' + `${option} creado con éxito.`)
+            Toast('success', `Nuevo ${option}` + '\n' + '\n' + `${option} creado con éxito.`);
             document.getElementById('name').value = '';
         } else 
-            Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Error al crear el ${option.toLowerCase()}.`)
+            Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Error al crear el ${option.toLowerCase()}.`);
+    } catch(error) {
+        console.log('Error', error);
+        Toast('error', `Nuevo ${option}` + '\n' + '\n' + 'Error de conexión con el servidor.');
+    }
+}
+
+async function NewTeam() {
+    const teamName = document.getElementById('name').value.trim();
+    const category = document.getElementById('categoria').value;
+    const group = document.getElementById('groupTm').value;
+    const tec = document.getElementById('tecTm').value;
+    const option = document.querySelector('.bttnNm p').textContent.trim();
+    
+    if (/\bequipo\b/i.test(teamName)) {
+        Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Por favor, elimine la palabra ${option}.`);
+        return;
+    }
+
+    const existingTeam = await getExistingTeams(teamName, category, group, tec);
+    if(existingTeam) {        
+        Toast('error',`Nuevo ${option}` + '\n' + '\n' + `Este ${option.toLowerCase()} ya existe.`);
+        return;
+    }
+
+    try {
+        const disciplinaId = await getDisciplineId(category.toLowerCase());
+
+        const response = await createTeam({
+            nombre: teamName,
+            diciplinaid: disciplinaId,
+            grupoid: parseInt(group),
+            tecsid: parseInt(tec)
+        });
+
+        if(response && response.id_equipo) {
+            Toast('success', `Nuevo ${option}` + '\n' + '\n' + `${option} creado con éxito.`);
+            document.getElementById('name').value = '';
+        } else 
+            Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Error al crear el ${option.toLowerCase()}.`);
+
     } catch(error) {
         console.log('Error', error);
         Toast('error', `Nuevo ${option}` + '\n' + '\n' + 'Error de conexión con el servidor.');
@@ -490,6 +785,75 @@ async function SelectGroup() {
         document.getElementById('cancel').addEventListener('click', CancelGroup);
     } catch (error) {
         console.error('Error cargando grupo:', error);
+    }
+}
+
+async function SelectTeam() {
+    const teamSelected = document.getElementById('teamS').value;
+    const container = document.querySelector('.info');
+
+    try {
+        const team = await getTeamByID(teamSelected);
+        let category = document.getElementById('categoria')?.value;
+        if(!category) category = 'Femenil';
+
+        const discipline = await getDisciplineId(category.toLowerCase());
+        const groups = await getGroupsByDiscID(discipline);
+        const tecs = await getTecs();
+
+        container.innerHTML = `
+            <div class="category team">
+                <div class="teamOpt">
+                    <p class="title">NOMBRE</p>
+                    <input class="input selector team" id="name" type="text" placeholder="Opcional" value="${team.nombre}">
+                </div>           
+                        
+                <div class="teamOpt">
+                    <p class="title">CATEGORIA</p>      
+                    <select class="input selector team" id="categoria">
+                        <option value="Femenil" ${discipline.categoria === 'Femenil' ? 'selected' : ''}>Femenil</option>
+                        <option value="Varonil" ${discipline.categoria === 'Varonil' ? 'selected' : ''}>Varonil</option>
+                    </select>
+                </div>
+            </div> 
+
+            <div class="category team">
+                <div class="teamOpt">
+                    <p class="title">GRUPO</p>
+                    <select class="input selector team" id="groupTm">
+                        ${groups.map(group => `<option value="${group.id_grupo}" ${group.id_grupo === team.grupoid ? 'selected' : ''}>${group.nombre}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="teamOpt">
+                    <p class="title">TEC</p>
+                    <select class="input selector team" id="tecTm">
+                        ${tecs.map(tec => `<option value="${tec.id_tecs}" ${tec.id_tecs === team.tecsid ? 'selected' : ''}>${tec.nombre}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btns" id="modify">MODIFICAR</button> 
+                <button class="btns" id="cancel">CANCELAR</button> 
+            </div>
+        `;
+
+        document.getElementById('modify').addEventListener('click', () => ModifyTeam(teamSelected));
+        document.getElementById('cancel').addEventListener('click', CancelTeam);
+
+        document.getElementById('categoria').addEventListener('change', async (e) => {
+            const selectedCategory = e.target.value;
+            const disciplineId = await getDisciplineId(selectedCategory.toLowerCase());
+            const updatedGroups = await getGroupsByDiscID(disciplineId);
+
+            const groupSelect = document.getElementById('groupTm');
+            groupSelect.innerHTML = updatedGroups
+                .map(group => `<option value="${group.id_grupo}">${group.nombre}</option>`)
+                .join('');
+        });
+    } catch (error) {
+        console.error('Error cargando equipo:', error);
     }
 }
 
@@ -555,11 +919,91 @@ async function ModifyGroup(groupSelected) {
     }
 }
 
+async function ModifyTeam(teamSelected) {
+    const container = document.querySelector('.info');
+    const option = document.querySelector('.bttnNm p').textContent.trim();    
+
+    const teamName = document.getElementById('name').value.trim();
+    const category = document.getElementById('categoria').value;
+    const group = document.getElementById('groupTm').value;
+    const tec = document.getElementById('tecTm').value;
+
+    const originalTeam = await getTeamByID(teamSelected);
+    const originalDiscipline = await getDisciplineByID(originalTeam.diciplinaid);
+    const originalName = originalTeam.nombre;
+    const originalCategory = originalDiscipline.categoria;
+    const originalGroup = originalTeam.grupoid;
+    const originalTec = originalTeam.tecsid;
+
+    if (/\bequipo\b/i.test(teamName)) {
+        Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Por favor, elimine la palabra ${option}.`);
+        return;
+    }
+
+    if (teamName === originalName && category === originalCategory && group == originalGroup && tec == originalTec) {
+        Toast('error', `Modificar ${option}` + '\n' + '\n' + 'Presione Cancelar si no desea realizar cambios.');
+        return;
+    }
+
+    try {
+        const disciplinaId = await getDisciplineId(category.toLowerCase());
+
+        const response = await modifyTeam({
+            nombre: teamName,
+            diciplinaid: disciplinaId,
+            grupoid: parseInt(group),
+            tecsid: parseInt(tec)
+        }, teamSelected);
+
+        console.log(response);
+
+        if(response && response.id_equipo) {
+            Toast('success', `Modificar ${option}` + '\n' + '\n' + `${option} modificado con éxito.`);
+
+            const disciplineList = await getDisciplineByName();
+            const ids = disciplineList.map(d => d.id_diciplinas);
+            const teams = await getTeamsByDiscipline(ids);
+
+            try {
+                const optionsPromises = teams.map(async (team) => {
+                    let teamName = team.nombre;
+
+                    if(!teamName) {                                        
+                        const result = await getTecCityByID(team.tecsid);      
+                        teamName = result.ciudad;                    
+                    }
+                    return `<option value="${team.id_equipo}">${teamName}</option>`;
+                });
+
+                const optionsHTML = (await Promise.all(optionsPromises)).join('');
+
+                container.innerHTML = `
+                    <div class="modify">
+                        <p>SELECCIONE EL EQUIPO A MODIFICAR</p>                
+                        <select class="input selector m" id="teamS">
+                            ${optionsHTML}
+                        </select>
+                    </div>
+
+                    <button class="btns" id="select">SELECCIONAR</button> 
+                `;
+                document.getElementById('select').addEventListener('click', SelectTeam);
+            } catch(error) {
+                console.log('Error', error);
+            }
+        } else 
+            Toast('error', `Modificar ${option}` + '\n' + '\n' + `Error al modificar el ${option.toLowerCase()}.`);
+    } catch(error) {
+        console.log('Error', error);
+        Toast('error', `Modificar ${option}` + '\n' + '\n' + 'Error de conexión con el servidor.');
+    }
+}
+
 async function CancelGroup() {
     const container = document.querySelector('.info');
     const disciplineList = await getDisciplineByName();
-        const ids = disciplineList.map(d => d.id_diciplinas);
-        const groups = await getGroupsByDiscipline(ids);
+    const ids = disciplineList.map(d => d.id_diciplinas);
+    const groups = await getGroupsByDiscipline(ids);
 
         container.innerHTML = `
             <div class="modify">
@@ -573,6 +1017,41 @@ async function CancelGroup() {
         `;
 
         document.getElementById('select').addEventListener('click', SelectGroup);
+}
+
+async function CancelTeam() {
+    const container = document.querySelector('.info');
+    const disciplineList = await getDisciplineByName();
+    const ids = disciplineList.map(d => d.id_diciplinas);
+    const teams = await getTeamsByDiscipline(ids);
+
+    try {
+        const optionsPromises = teams.map(async (team) => {
+            let teamName = team.nombre;
+
+            if(!teamName) {                                        
+                const result = await getTecCityByID(team.tecsid);      
+                teamName = result.ciudad;                    
+            }
+            return `<option value="${team.id_equipo}">${teamName}</option>`;
+        });
+
+        const optionsHTML = (await Promise.all(optionsPromises)).join('');
+
+        container.innerHTML = `
+            <div class="modify">
+                <p>SELECCIONE EL EQUIPO A MODIFICAR</p>                
+                <select class="input selector m" id="teamS">
+                    ${optionsHTML}
+                </select>
+            </div>
+
+            <button class="btns" id="select">SELECCIONAR</button> 
+        `;
+        document.getElementById('select').addEventListener('click', SelectTeam);
+    } catch(error) {
+        console.log('Error', error);
+    }
 }
 
 async function SearchGroup() {
@@ -602,12 +1081,12 @@ async function SearchGroup() {
 
         container.innerHTML = `
             <div class="input-box">           
-                <p class="title">GRUPO:</p>      
+                <p class="title bold">GRUPO:</p>      
                 <p class="title">${groupName}</p>   
             </div> 
 
             <div class="category">
-                <p class="title">CATEGORIA:</p>
+                <p class="title bold">CATEGORIA:</p>
                 <p class="title">${discipline.categoria}</p>      
             </div>
 
@@ -615,6 +1094,63 @@ async function SearchGroup() {
         `;
 
         document.getElementById('return').addEventListener('click', ReturnGroup);
+    } catch (error) {
+        console.error('Error cargando grupo:', error);
+    }
+}
+
+async function SearchTeam() {
+    const container = document.querySelector('.info');
+    const option = document.querySelector('.bttnNm p').textContent.trim();
+    const teamName = document.getElementById('name').value.trim();
+    const category = document.getElementById('categoria').value;
+    const group = document.getElementById('groupTm').value;
+    const tec = document.getElementById('tecTm').value;
+
+    if (/\bequipo\b/i.test(teamName)) {
+        Toast('error', `Modificar ${option}` + '\n' + '\n' + `Por favor, elimine la palabra ${option}.`);
+        return;
+    }
+
+    const existingTeam = await getExistingTeams(teamName, category, group, tec);
+    if(existingTeam == null) {        
+        Toast('error',`Modificar ${option}` + '\n' + '\n' + `Este ${option.toLowerCase()} no existe.`);
+        return;
+    }
+
+    try {
+        const groupName = await getGroupByID(group);
+        const tecName = await getTecCityByID(tec);
+
+        container.innerHTML = `
+            <div class="category team src">
+                <div class="teamOpt">
+                    <p class="title bold">NOMBRE:</p>
+                    <p class="title">${teamName}</p>
+                </div>           
+                        
+                <div class="teamOpt">
+                    <p class="title bold">CATEGORIA:</p>      
+                    <p class="title">${category}</p>
+                </div>
+            </div> 
+
+            <div class="category team src">
+                <div class="teamOpt">
+                    <p class="title bold">GRUPO:</p>
+                    <p class="title">${groupName.nombre}</p>
+                </div>
+
+                <div class="teamOpt">
+                    <p class="title bold">TEC:</p>
+                    <p class="title">${tecName.nombre}</p>
+                </div>
+            </div>
+
+            <button class="btns teamSrc" id="return">REGRESAR</button>
+        `;            
+
+        document.getElementById('return').addEventListener('click', ReturnTeam);
     } catch (error) {
         console.error('Error cargando grupo:', error);
     }
@@ -640,6 +1176,70 @@ async function ReturnGroup() {
             <button class="btns" id="search">BUSCAR</button> 
         `;
         document.getElementById('search').addEventListener('click', SearchGroup);
+}
+
+async function ReturnTeam() {
+    const container = document.querySelector('.info');
+
+    try {
+        let category = document.getElementById('categoria')?.value;
+        if(!category) category = 'Femenil';
+
+        const discipline = await getDisciplineId(category.toLowerCase());
+        const groups = await getGroupsByDiscID(discipline);
+        const tecs = await getTecs();
+
+        container.innerHTML = `
+            <div class="category srcTeam">
+                <div class="modify srcTeam">
+                    <p class="title">EQUIPO QUE DESEA BUSCAR</p>
+                    <input class="input selector srcTeam" id="name" type="text" placeholder="Opcional">
+                </div>           
+                            
+                <div class="modify srcTeam">
+                    <p class="title">SELECCIONE SU CATEGORÍA</p>      
+                    <select class="input selector srcTeam" id="categoria">
+                        <option value="Femenil">Femenil</option>
+                        <option value="Varonil">Varonil</option>
+                    </select>
+                </div>
+            </div> 
+
+            <div class="category srcTeam">
+                <div class="modify srcTeam">
+                    <p class="title">SELECCIONE SU GRUPO</p>
+                    <select class="input selector srcTeam" id="groupTm">
+                        ${groups.map(group => `<option value="${group.id_grupo}">${group.nombre}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="modify srcTeam">
+                    <p class="title">SELECCIONE EL TEC</p>
+                    <select class="input selector srcTeam" id="tecTm">
+                        ${tecs.map(tec => `<option value="${tec.id_tecs}">${tec.nombre}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+
+            <button class="btns srcTeam" id="search">BUSCAR</button>
+            `;
+
+            document.getElementById('search').addEventListener('click', SearchTeam);
+
+            document.getElementById('categoria').addEventListener('change', async (e) => {
+                console.log("Escuchando cambio en categoría");
+                const selectedCategory = e.target.value;
+                const disciplineId = await getDisciplineId(selectedCategory.toLowerCase());
+                const updatedGroups = await getGroupsByDiscID(disciplineId);
+
+                const groupSelect = document.getElementById('groupTm');
+                groupSelect.innerHTML = updatedGroups
+                    .map(group => `<option value="${group.id_grupo}">${group.nombre}</option>`)
+                    .join('');
+            });
+        } catch(error){
+            console.log("Error en añadir grupos y tecs: ", error);
+        }
 }
 
 async function DeleteGroup() {
@@ -669,6 +1269,52 @@ async function DeleteGroup() {
             `;
 
             document.getElementById('delete').addEventListener('click', DeleteGroup);
+        } else 
+            Toast('error', `Eliminar ${option}` + '\n' + '\n' + `Error al eliminar el ${option.toLowerCase()}.`);
+    } catch(error) {
+        console.log('Error', error);
+        Toast('error', `Eliminar ${option}` + '\n' + '\n' + 'Error de conexión con el servidor.');
+    }
+}
+
+async function DeleteTeam() {
+    const teamSelected = document.getElementById('teamS').value;
+    const option = document.querySelector('.bttnNm p').textContent.trim();
+    const container = document.querySelector('.info');
+
+    try {
+        const response = await deleteTeam(teamSelected);
+
+        if(response && response.id_equipo) {
+            Toast('success', `Eliminar ${option}` + '\n' + '\n' + `${option} eliminado con éxito.`);
+
+            const disciplineList = await getDisciplineByName();
+            const ids = disciplineList.map(d => d.id_diciplinas);
+            const teams = await getTeamsByDiscipline(ids);
+
+            const optionsPromises = teams.map(async (team) => {
+                let teamName = team.nombre;
+
+                if(!teamName) {                                        
+                    const result = await getTecCityByID(team.tecsid);      
+                    teamName = result.ciudad;                    
+                }
+                return `<option value="${team.id_equipo}">${teamName}</option>`;
+            });
+
+            const optionsHTML = (await Promise.all(optionsPromises)).join('');
+
+            container.innerHTML = `
+                <div class="modify">
+                    <p>SELECCIONE EL EQUIPO A ELIMINAR</p>                
+                    <select class="input selector m" id="teamS">
+                        ${optionsHTML}
+                    </select>
+                </div>
+
+                <button class="btns" id="delete">ELIMINAR</button> 
+            `;
+            document.getElementById('delete').addEventListener('click', DeleteTeam);
         } else 
             Toast('error', `Eliminar ${option}` + '\n' + '\n' + `Error al eliminar el ${option.toLowerCase()}.`);
     } catch(error) {
@@ -729,6 +1375,17 @@ async function getGroupByID(ID) {
     }
 }
 
+async function getGroupsByDiscID(ID) {
+    try {
+        const grupos = await fetchGroups();
+
+        return grupos.filter(g => g.disciplinaid == ID);       // == por si ID es un string 
+    } catch(error) {
+        console.error('Error obteniendo grupos:', error);
+        return null;
+    }
+}
+
 async function getGroupsByDiscipline(ids) {
     try {
         const grupos = await fetchGroups();
@@ -782,11 +1439,62 @@ async function getGroupByName(name) {
 }
 
 // EQUIPOS
+async function getTeamByID(ID) {
+    try {
+        const teams = await fetchTeams();
+
+        return teams.find(t => t.id_equipo == ID);
+    } catch(error) {
+        console.error('Error obteniendo equipos:', error);
+        return null;
+    }
+}
+
+async function getTeamsByDiscID(ID) {
+    try {
+        const equipos = await fetchTeams();
+
+        return equipos.filter(e => e.diciplinaid == ID); 
+    } catch(error) {
+        console.error('Error obteniendo equipos:', error);
+        return null;
+    }
+}
+
 async function getTeamsByDiscipline(ids) {
     try {
         const equipos = await fetchTeams();
 
         return equipos.filter(e => ids.includes(e.diciplinaid));
+    } catch(error) {
+        console.error('Error obteniendo equipos:', error);
+        return null;
+    }
+}
+
+async function getExistingTeams(name, category, groupID, tecID) {
+    try {
+        const [teams, disciplines] = await Promise.all([
+            fetchTeams(),
+            fetchDisciplines()
+        ]);
+
+        // Buscar la disciplina correcta
+        const discipline = disciplines.find(d => {
+            return d.nombre === disciplineName &&
+                   d.categoria === category
+        });
+        if(!discipline) return null;
+        
+        // Buscar el equipo
+        const team = teams.find(t => 
+            t.nombre.toLowerCase() === name.toLowerCase() &&
+            t.diciplinaid == discipline.id_diciplinas &&
+            t.grupoid == groupID &&
+            t.tecsid == tecID
+        );
+
+        return team || null;
     } catch(error) {
         console.error('Error obteniendo equipos:', error);
         return null;
@@ -802,6 +1510,16 @@ async function getTecCityByID(ID) {
     } catch(error) {
         console.error('Error obteniendo tecs:', error);
         return null;
+    }
+}
+
+async function getTecs() {
+    try {
+        const tecs = await fetchTecs();
+        return tecs;
+    } catch(error) {
+        console.error('Error obteniendo tecnologicos:', error);
+        return [];
     }
 }
 
@@ -838,6 +1556,26 @@ async function createGroup(groupData) {
     }
 }
 
+async function createTeam(groupData) {
+    try {
+        const response = await fetch('http://localhost:3000/api/equipo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(groupData)
+        });
+
+        return response.json();
+    } catch(error) {
+        console.error('Error en createTeamInDatabase:', error);
+        return { 
+            success: false, 
+            message: 'Error de conexión con el servidor' 
+        };
+    }
+}
+
 async function modifyGroup(groupData, ID) {
     try {
         const response = await fetch(`http://localhost:3000/api/grupos/${ID}?`, {
@@ -858,6 +1596,26 @@ async function modifyGroup(groupData, ID) {
     }
 }
 
+async function modifyTeam(groupData, ID) {
+    try {
+        const response = await fetch(`http://localhost:3000/api/equipo/${ID}?`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(groupData)
+        });
+
+        return response.json();
+    } catch(error) {
+        console.error('Error en modifyTeamInDatabase:', error);
+        return { 
+            success: false, 
+            message: 'Error de conexión con el servidor' 
+        };
+    }
+}
+
 async function deleteGroup(ID) {
     try {
         const response = await fetch(`http://localhost:3000/api/grupos/${ID}`, {
@@ -870,6 +1628,25 @@ async function deleteGroup(ID) {
         return response.json();
     } catch(error) {
         console.error('Error en deleteGroupInDatabase:', error);
+        return { 
+            success: false, 
+            message: 'Error de conexión con el servidor' 
+        };
+    }
+}
+
+async function deleteTeam(ID) {
+    try {
+        const response = await fetch(`http://localhost:3000/api/equipo/${ID}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        return response.json();
+    } catch(error) {
+        console.error('Error en deleteTeamInDatabase:', error);
         return { 
             success: false, 
             message: 'Error de conexión con el servidor' 

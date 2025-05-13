@@ -291,7 +291,7 @@ ul { list-style: none; }
 }
 
 .info {
-    width: 65%;
+    width: 70%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -329,6 +329,8 @@ ul { list-style: none; }
     color: var(--white);
     padding: 0 35px 0 10px;
 }
+
+input::placeholder { color: var(--white); }
 
 .input.selector {
     -webkit-appearance: none;
@@ -421,3 +423,76 @@ ul { list-style: none; }
 }
 
 .catSearch { margin-top: 1em; }
+
+/* ====================== CONTENIDO / AÑADIR EQUIPOS ====================== */
+.category.team { 
+    gap: 5%; 
+    padding: 0;
+    justify-content: center;
+    padding: 0 2em;
+}
+
+.teamOpt {
+    position: relative;
+    display: flex;
+    width: 48%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.teamOpt p { font-size: 1.9em; }
+
+.inputDesc {
+    display: flex;
+    flex-direction: column;
+}
+
+.input.team { margin: 0; }
+
+.input.selector.team,
+.input.selector.play { margin-left: 7%; }
+
+/* ====================== CONTENIDO / BUSCAR EQUIPOS ====================== */
+.category.srcTeam { 
+    border-bottom: none; 
+    height: 80px;
+    padding: 0;
+}
+
+.category.team,
+.category.team.src { width: 120%; }
+
+.category.team.src:last-of-type { height: 90px; }
+
+.modify.srcTeam {
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.input.selector.srcTeam { 
+    width: 90%; 
+    margin: 0;
+}
+
+.btns.srcTeam { margin-top: 3%; }
+
+.btns.teamSrc { margin-top: 5%; }
+
+.title.bold { font-weight: bold; }
+
+/* ====================== CONTENIDO / AÑADIR JUGADORES ====================== */
+.input-box.play,
+.category.team.play {
+    width: 120%;
+    padding: 0 2em;
+}
+
+.input-box.play { margin-top: -6%; }
+
+.input.play { margin: 0; }
+
+.btns.play { margin-top: 1.6%; }
