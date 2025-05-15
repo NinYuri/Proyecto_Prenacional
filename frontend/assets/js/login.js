@@ -52,7 +52,7 @@ form.addEventListener('submit', async e=>{
           Toast('error', 'Bienvenido al Sistema' + '\n' + '\n' + 'La contraseña es incorrecta.');
         else {
           try {
-            const res = await fetch('http://localhost:3000/api/auth/login', {
+            /*const res = await fetch('http://localhost:3000/api/auth/login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ nombre: user.value.trim(), contrasena: password.input.value.trim() })
@@ -65,7 +65,7 @@ form.addEventListener('submit', async e=>{
 
             const data = await res.json();
             console.log("Token recibido:", data.access_token);
-            localStorage.setItem('token', data.access_token);
+            localStorage.setItem('token', data.access_token);*/
 
             // Redirección por nombre de usuario
             const nombre = usuario.nombre;

@@ -201,7 +201,7 @@ ul { list-style: none; }
 
 /* ====================== OPCIONES ====================== */
 .options {
-    background-image: url('/frontend/assets/images/Background.webp');
+    background-image: url('../images/Background.webp');
     background-position: right right;
     background-repeat: no-repeat;
     background-size: cover;
@@ -496,3 +496,9 @@ input::placeholder { color: var(--white); }
 .input.play { margin: 0; }
 
 .btns.play { margin-top: 1.6%; }
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

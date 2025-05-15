@@ -586,19 +586,62 @@ async function SubOptionJ(e) {
                 <div class="category team play">
                     <div class="teamOpt">
                         <p class="title">NUMERO</p>
-                        <input class="input selector play" id="number" type="text">
+                        <input class="input selector play" id="number" type="number" min="0" step="1">
                     </div>           
                             
-                    <div class="teamOpt">
-                        <p class="title">POSICION</p>      
-                        <input class="input selector play" id="position" type="text">
+                    <div class="teamOpt position">
+                        <p class="title">POSICION</p>                        
                     </div>
                 </div>   
 
-                <button class="btns play" id="save">SUBIR FOTO</button>
+                <button class="btns play" id="picture">SUBIR FOTO</button>
             `;
+
+            const positionContainer = document.querySelector('.teamOpt.position');
+            if(disciplineName === 'Básquetbol') {                
+                positionContainer.innerHTML += `
+                    <select class="input selector play" id="posicion">
+                        <option value="Base">Base</option>
+                        <option value="Escolta">Escolta</option>
+                        <option value="Alero">Alero</option>
+                        <option value="Ala-Pívot">Ala-Pívot</option>
+                        <option value="Pívot">Pívot</option>
+                    </select>
+                `;
+            } else 
+                if(disciplineName === 'Voleibol') {
+                    positionContainer.innerHTML += `
+                        <select class="input selector play" id="posicion">
+                            <option value="Colocador">Colocador</option>
+                            <option value="Opuesto">Opuesto</option>
+                            <option value="Central">Central</option>
+                            <option value="Receptor-Punta">Receptor-Punta</option>
+                            <option value="Libero">Libero</option>
+                            <option value="Defensa">Defensa</option>
+                        </select>                        
+                    `;
+                } else 
+                    if(disciplineName === 'Fútbol') {
+                        positionContainer.innerHTML += `
+                            <select id="posicion" class="input selector play">
+                                <option value="Portero">Portero</option>
+                                <option value="Defensa Central">Defensa Central</option>
+                                <option value="Lateral Derecho">Lateral Derecho</option>
+                                <option value="Lateral Izquierdo">Lateral Izquierdo</option>
+                                <option value="Mediapunta">Mediapunta</option>
+                                <option value="Centrocampista Defensivo">Centrocampista Defensivo</option>
+                                <option value="Mediocentro">Mediocentro</option>
+                                <option value="Interior Derecho">Interior Derecho</option>
+                                <option value="Interior Izquierdo">Interior Izquierdo</option>
+                                <option value="Extremo Derecho">Extremo Derecho</option>
+                                <option value="Extremo Izquierdo">Extremo Izquierdo</option>
+                                <option value="Delantero Centro">Delantero Centro</option>
+                                <option value="Segundo Delantero">Segundo Delantero</option>
+                                </select>
+                        `;
+                    }                
             
-            // document.getElementById('select').addEventListener('click', SelectTeam);
+            document.getElementById('picture').addEventListener('click', UploadPhoto);
 
             document.getElementById('categoria').addEventListener('change', async (e) => {
                 const selectedCategory = e.target.value;
@@ -668,7 +711,7 @@ async function SubOptionJ(e) {
             <button class="btns" id="delete">ELIMINAR</button> 
         `;
 
-        //document.getElementById('delete').addEventListener('click');
+        document.getElementById('delete').addEventListener('click', DeletePlayer);
     }
 }
 
@@ -750,6 +793,37 @@ async function NewTeam() {
         console.log('Error', error);
         Toast('error', `Nuevo ${option}` + '\n' + '\n' + 'Error de conexión con el servidor.');
     }
+}
+
+async function UploadPhoto() {
+    const playerName = document.getElementById('name').value.trim();
+    const category = document.getElementById('categoria').value;
+    const team = document.getElementById('equipo').value;
+    const number = document.getElementById('number').value.trim();
+    const position = document.getElementById('posicion').value;
+    const option = document.querySelector('.bttnNm p').textContent.trim();
+    const container = document.querySelector('.info');
+
+    if(!playerName) {
+        Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Debe ingresar un nombre para el ${option.toLowerCase()}.`);
+        return;
+    }
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ\s]+$/.test(playerName)) {
+        Toast('error', `Nuevo ${option}` + '\n\n' + `El nombre sólo debe contener letras.`);
+        return;
+    }
+    if(!number) {
+        Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Debe ingresar un número para el ${option.toLowerCase()}.`);
+        return;
+    }
+
+    const existingPlayer = await getExistingPlayer(playerName, number, team);
+    if (existingPlayer) {
+        Toast('error', `Nuevo ${option}` + '\n\n' + `Este ${option.toLowerCase()} ya está registrado en el equipo con el mismo número.`);
+        return;
+    }
+
+    
 }
 
 async function SelectGroup() {
@@ -1323,6 +1397,45 @@ async function DeleteTeam() {
     }
 }
 
+async function DeletePlayer() {
+    const playerSelected = document.getElementById('playerS').value;
+    const option = document.querySelector('.bttnNm p').textContent.trim();
+    const container = document.querySelector('.info');
+
+    try {
+        const response = await deletePlayer(playerSelected);
+
+        if(response && response.id_jugador) {
+            Toast('success', `Eliminar ${option}` + '\n' + '\n' + `${option} eliminado con éxito.`);
+
+            const disciplineList = await getDisciplineByName();
+            const ids = disciplineList.map(d => d.id_diciplinas);
+
+            const teamsList = await getTeamsByDiscipline(ids);
+            const idsT = teamsList.map(t => t.id_equipo);
+
+            const players = await getPlayersByTeams(idsT);
+
+            container.innerHTML = `
+                <div class="modify">
+                    <p>SELECCIONE EL ${option.toUpperCase()} A ELIMINAR</p>                
+                    <select class="input selector m" id="playerS">
+                        ${players.map(player => `<option value="${player.id_jugador}">${player.nombre}</option>`).join('')}
+                    </select>
+                </div>
+
+                <button class="btns" id="delete">ELIMINAR</button> 
+            `;
+
+            document.getElementById('delete').addEventListener('click', DeletePlayer);
+        } else 
+            Toast('error', `Eliminar ${option}` + '\n' + '\n' + `Error al eliminar el ${option.toLowerCase()}.`);
+    } catch(error) {
+        console.log('Error', error);
+        Toast('error', `Eliminar ${option}` + '\n' + '\n' + 'Error de conexión con el servidor.');
+    }
+}
+
 /* ========================================== API ========================================== */
 // DISCIPLINAS
 async function getDisciplineByID(ID) {
@@ -1535,6 +1648,21 @@ async function getPlayersByTeams(ids) {
     }
 }
 
+async function getExistingPlayer(name, number, team) {
+    try {
+        const players = await fetchPlayers();
+
+        return players.find(p => 
+            p.nombre.toLowerCase().trim() === name.toLowerCase().trim() &&
+            p.numero == number &&
+            p.equipoid == team
+        );
+    } catch(error) {
+        console.error('Error obteniendo jugadores:', error);
+        return null;
+    }
+}
+
 /* ========================================== POST ========================================== */
 async function createGroup(groupData) {
     try {
@@ -1654,6 +1782,25 @@ async function deleteTeam(ID) {
     }
 }
 
+async function deletePlayer(ID) {
+    try {
+        const response = await fetch(`http://localhost:3000/api/jugador/${ID}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        return response.json();
+    } catch(error) {
+        console.error('Error en deletePlayerInDatabase:', error);
+        return { 
+            success: false, 
+            message: 'Error de conexión con el servidor' 
+        };
+    }
+}
+
 /* ========================================== FETCH ========================================== */
 async function fetchDisciplines() {
   try {
@@ -1706,6 +1853,61 @@ async function fetchPlayers() {
         return response.json();
     } catch(error) {
         console.error('Error obteniendo jugadores: ', error);
+        return [];
+    } 
+}
+
+async function fetchPartidos() {
+    try {
+        const response = await fetch('http://localhost:3000/api/partido');
+        if(!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.error('Error obteniendo partidos: ', error);
+        return [];
+    } 
+}
+
+async function fetchRoles() {
+    try {
+        const response = await fetch('http://localhost:3000/api/roldejuegos');
+        if(!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.error('Error obteniendo partidos: ', error);
+        return [];
+    } 
+}
+
+async function fetchClasificacion() {
+    try {
+        const response = await fetch('http://localhost:3000/api/clasificacion');
+        if(!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.error('Error obteniendo clasificacion: ', error);
+        return [];
+    } 
+}
+
+async function fetchCancha() {
+    try {
+        const response = await fetch('http://localhost:3000/api/cancha');
+        if(!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.error('Error obteniendo cancha: ', error);
+        return [];
+    } 
+}
+
+async function fetchRestaurantes() {
+    try {
+        const response = await fetch('http://localhost:3000/api/puntosdeinteres');
+        if(!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        return response.json();
+    } catch(error) {
+        console.error('Error obteniendo puntos de interés: ', error);
         return [];
     } 
 }

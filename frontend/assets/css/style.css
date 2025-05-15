@@ -177,7 +177,7 @@ ul { list-style: none; }
 
 /* ====================== HEADER ====================== */
 header {
-    background-image: url('/frontend/assets/images/Cancha_Tec.webp');
+    background-image: url('../images/Cancha_Tec.webp');
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -286,7 +286,7 @@ header {
     position: relative;
     width: 100%;
     height: 100vh;
-    background-image: url('/frontend/assets/images/Background.webp');
+    background-image: url('../images/Background.webp');
     background-position: center center;
     background-repeat: no-repeat;
     background-size: cover;
