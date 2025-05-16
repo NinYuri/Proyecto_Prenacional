@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
 import { EquipoModule } from './equipo/equipo.module';
 import { UserModule } from './user/user.module';
@@ -15,7 +16,10 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
-  imports: [ EquipoModule, UserModule, CanchaModule, ClasificacionModule, JugadorModule, PartidoModule, DisciplinasModule, GruposModule, PuntosdeinteresModule, RoldejuegosModule, TecsModule, AuthModule, PrismaModule],
+  imports: [ ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    EquipoModule, UserModule, CanchaModule, ClasificacionModule, JugadorModule, PartidoModule, DisciplinasModule, GruposModule, PuntosdeinteresModule, RoldejuegosModule, TecsModule, AuthModule, PrismaModule],
   controllers: [],
   providers: [],
 })

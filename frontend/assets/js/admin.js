@@ -594,7 +594,7 @@ async function SubOptionJ(e) {
                     </div>
                 </div>   
 
-                <button class="btns play" id="picture">SUBIR FOTO</button>
+                <button class="btns play" id="picture">SELECCIONAR FOTO</button>
             `;
 
             const positionContainer = document.querySelector('.teamOpt.position');
@@ -688,7 +688,7 @@ async function SubOptionJ(e) {
             <button class="btns" id="select">SELECCIONAR</button> 
         `;
 
-        //document.getElementById('select').addEventListener('click');
+        document.getElementById('select').addEventListener('click', SelectPlayer);
     }
 
     if(delBtn) {
@@ -797,12 +797,10 @@ async function NewTeam() {
 
 async function UploadPhoto() {
     const playerName = document.getElementById('name').value.trim();
-    const category = document.getElementById('categoria').value;
     const team = document.getElementById('equipo').value;
     const number = document.getElementById('number').value.trim();
     const position = document.getElementById('posicion').value;
     const option = document.querySelector('.bttnNm p').textContent.trim();
-    const container = document.querySelector('.info');
 
     if(!playerName) {
         Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Debe ingresar un nombre para el ${option.toLowerCase()}.`);
@@ -812,8 +810,13 @@ async function UploadPhoto() {
         Toast('error', `Nuevo ${option}` + '\n\n' + `El nombre sólo debe contener letras.`);
         return;
     }
+
     if(!number) {
         Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Debe ingresar un número para el ${option.toLowerCase()}.`);
+        return;
+    }
+    if (!/^\d+$/.test(number)) {
+        Toast('error', `Nuevo ${option}` + '\n\n' + `El número debe ser un valor numérico entero positivo.`);
         return;
     }
 
@@ -823,7 +826,220 @@ async function UploadPhoto() {
         return;
     }
 
-    
+    await NewPlayer(playerName, team, number, position);
+}
+
+async function NewPlayer(playerName, team, number, position) {
+    const container = document.querySelector('.info');
+    const option = document.querySelector('.bttnNm p').textContent.trim();
+
+    container.innerHTML = `        
+        <div class="playerPic">
+            <div class="photoPlayer">
+                <img src="./assets/images/Avatar.webp" alt="avatar" id="imgPlayer" /> 
+            </div>
+            
+            <div class="playerInfo">
+                <input type="file" name="foto" id="foto" accept="image/*" style="display: none;" />
+                <button type="button" id="uploadPhoto" class="btns player">SUBIR FOTO</button>
+                <button class="btns player" id="save">GUARDAR</button>
+            </div>            
+        </div>                          
+    `;
+
+    let cloudinaryUrl = '';
+
+    document.getElementById('uploadPhoto').addEventListener('click', () => {
+        document.getElementById('foto').click();
+    });
+
+    document.getElementById('foto').addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        const img = document.getElementById('imgPlayer');
+
+        if (file) {
+            try {
+                // Subir a Cloudinary
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', 'proyect_preset');
+                formData.append('cloud_name', 'domqtirek');
+
+                const response = await fetch(
+                    `https://api.cloudinary.com/v1_1/domqtirek/image/upload`,
+                    {
+                        method: 'POST',
+                        body: formData
+                    }
+                );
+
+                if (!response.ok) console.log('Error en subida');
+                
+                const data = await response.json();
+                cloudinaryUrl = data.secure_url;
+                img.src = cloudinaryUrl;
+
+            } catch (error) {
+                console.error('Error subiendo imagen:', error);
+                Toast('error', 'Error al subir la foto');
+            }
+        }
+    });
+
+    document.getElementById('save').addEventListener('click', async () => {
+        const img = document.getElementById('imgPlayer');
+        const defaultSrc = 'assets/images/Avatar.webp';
+
+        if (!cloudinaryUrl || img.src.includes(defaultSrc)) {
+            Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Debe seleccionar una imagen válida.`);
+            return;
+        }            
+
+        try {
+            const response = await createPlayer({
+                nombre: playerName,
+                numero: parseInt(number),
+                posicion: position,
+                foto: cloudinaryUrl,
+                equipoid: parseInt(team)
+            });
+
+            if(response && response.id_jugador) {
+                Toast('success', `Nuevo ${option}` + '\n' + '\n' + `${option} creado con éxito.`);
+
+                let category = document.getElementById('categoria')?.value;
+                if(!category) category = 'Femenil';
+
+                const discipline = await getDisciplineId(category.toLowerCase());
+                const teamsList = await getTeamsByDiscID(discipline);
+
+                try {
+                    const optionsPromises = teamsList.map(async (team) => {
+                        let teamName = team.nombre;
+
+                        if(!teamName) {                                        
+                            const result = await getTecCityByID(team.tecsid);      
+                            teamName = result.ciudad;                    
+                        }
+                        return `<option value="${team.id_equipo}">${teamName}</option>`;
+                    });
+
+                    const optionsHTML = (await Promise.all(optionsPromises)).join('');
+
+                    container.innerHTML = `
+                        <div class="input-box play">           
+                            <p class="title">NOMBRE</p>         
+                            <input class="input play" id="name" type="text">                                               
+                        </div> 
+
+                        <div class="category team play">
+                            <div class="teamOpt">
+                                <p class="title">CATEGORIA</p>
+                                <select class="input selector play" id="categoria">
+                                    <option value="Femenil">Femenil</option>
+                                    <option value="Varonil">Varonil</option>
+                                </select>
+                            </div>           
+                                    
+                            <div class="teamOpt">
+                                <p class="title">EQUIPO</p>      
+                                <select class="input selector play" id="equipo">
+                                    ${optionsHTML}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="category team play">
+                            <div class="teamOpt">
+                                <p class="title">NUMERO</p>
+                                <input class="input selector play" id="number" type="number" min="0" step="1">
+                            </div>           
+                                    
+                            <div class="teamOpt position">
+                                <p class="title">POSICION</p>                        
+                            </div>
+                        </div>   
+
+                        <button class="btns play" id="picture">SELECCIONAR FOTO</button>
+                    `;
+
+                    const positionContainer = document.querySelector('.teamOpt.position');
+                    if(disciplineName === 'Básquetbol') {                
+                        positionContainer.innerHTML += `
+                            <select class="input selector play" id="posicion">
+                                <option value="Base">Base</option>
+                                <option value="Escolta">Escolta</option>
+                                <option value="Alero">Alero</option>
+                                <option value="Ala-Pívot">Ala-Pívot</option>
+                                <option value="Pívot">Pívot</option>
+                            </select>
+                        `;
+                    } else 
+                        if(disciplineName === 'Voleibol') {
+                            positionContainer.innerHTML += `
+                                <select class="input selector play" id="posicion">
+                                    <option value="Colocador">Colocador</option>
+                                    <option value="Opuesto">Opuesto</option>
+                                    <option value="Central">Central</option>
+                                    <option value="Receptor-Punta">Receptor-Punta</option>
+                                    <option value="Libero">Libero</option>
+                                    <option value="Defensa">Defensa</option>
+                                </select>                        
+                            `;
+                        } else 
+                            if(disciplineName === 'Fútbol') {
+                                positionContainer.innerHTML += `
+                                    <select id="posicion" class="input selector play">
+                                        <option value="Portero">Portero</option>
+                                        <option value="Defensa Central">Defensa Central</option>
+                                        <option value="Lateral Derecho">Lateral Derecho</option>
+                                        <option value="Lateral Izquierdo">Lateral Izquierdo</option>
+                                        <option value="Mediapunta">Mediapunta</option>
+                                        <option value="Centrocampista Defensivo">Centrocampista Defensivo</option>
+                                        <option value="Mediocentro">Mediocentro</option>
+                                        <option value="Interior Derecho">Interior Derecho</option>
+                                        <option value="Interior Izquierdo">Interior Izquierdo</option>
+                                        <option value="Extremo Derecho">Extremo Derecho</option>
+                                        <option value="Extremo Izquierdo">Extremo Izquierdo</option>
+                                        <option value="Delantero Centro">Delantero Centro</option>
+                                        <option value="Segundo Delantero">Segundo Delantero</option>
+                                        </select>
+                                `;
+                            }                
+                    
+                    document.getElementById('picture').addEventListener('click', UploadPhoto);
+
+                    document.getElementById('categoria').addEventListener('change', async (e) => {
+                        const selectedCategory = e.target.value;
+                        const disciplineId = await getDisciplineId(selectedCategory.toLowerCase());
+                        const updatedTeams = await getTeamsByDiscID(disciplineId);
+
+                        const optionsPromises = updatedTeams.map(async (team) => {
+                            let teamName = team.nombre;
+
+                            if (!teamName) {
+                                const result = await getTecCityByID(team.tecsid);
+                                teamName = result.ciudad;
+                            }
+
+                            return `<option value="${team.id_equipo}">${teamName}</option>`;
+                        });
+                        const optionsHTML = (await Promise.all(optionsPromises)).join('');
+
+                        const teamSelect = document.getElementById('equipo');
+                        teamSelect.innerHTML = optionsHTML;
+                    });
+                } catch(error) {
+                    console.log('Error', error);
+                }
+            }
+            else 
+                Toast('error', `Nuevo ${option}` + '\n' + '\n' + `Error al crear el ${option.toLowerCase()}.`);
+        } catch(error) {
+            console.log('Error', error);
+            Toast('error', `Nuevo ${option}` + '\n' + '\n' + 'Error de conexión con el servidor.');
+        }
+    });
 }
 
 async function SelectGroup() {
@@ -868,11 +1084,9 @@ async function SelectTeam() {
 
     try {
         const team = await getTeamByID(teamSelected);
-        let category = document.getElementById('categoria')?.value;
-        if(!category) category = 'Femenil';
 
-        const discipline = await getDisciplineId(category.toLowerCase());
-        const groups = await getGroupsByDiscID(discipline);
+        const discipline = await getDisciplineByID(team.diciplinaid);
+        const groups = await getGroupsByDiscID(discipline.id_diciplinas);
         const tecs = await getTecs();
 
         container.innerHTML = `
@@ -917,14 +1131,153 @@ async function SelectTeam() {
         document.getElementById('cancel').addEventListener('click', CancelTeam);
 
         document.getElementById('categoria').addEventListener('change', async (e) => {
+            try {
+                const selectedCategory = e.target.value;
+                const newDiscipline = await getDisciplineId(selectedCategory.toLowerCase());
+                const updatedGroups = await getGroupsByDiscID(newDiscipline.id_diciplinas);
+
+                const groupSelect = document.getElementById('groupTm');
+                groupSelect.innerHTML = updatedGroups
+                    .map(group => `<option value="${group.id_grupo}" ${group.id_grupo === team.grupoid ? 'selected' : ''}>${group.nombre}</option>`)
+                    .join('');
+            } catch(error) {
+                console.error('Error actualizando grupos:', error);
+            }
+        });
+    } catch (error) {
+        console.error('Error cargando equipo:', error);
+    }
+}
+
+async function SelectPlayer() {
+    const playerSelected = document.getElementById('playerS').value;
+    const container = document.querySelector('.info');
+
+    try {
+        const player = await getPlayerByID(playerSelected);
+        
+        const discipline = await getPlayerDisc(player.equipoid);    
+        const teamsList = await getTeamsByDiscID(discipline.id_diciplinas);
+
+        const optionsPromises = teamsList.map(async (team) => {
+            let teamName = team.nombre;
+
+            if(!teamName) {                                        
+                const result = await getTecCityByID(team.tecsid);      
+                teamName = result.ciudad;                    
+            }
+            return `<option value="${team.id_equipo}" ${team.id_equipo === player.equipoid ? 'selected' : ''}>${teamName}</option>`;
+        });
+
+        const optionsHTML = (await Promise.all(optionsPromises)).join('');
+
+        container.innerHTML = `
+            <div class="input-box play">           
+                <p class="title">NOMBRE</p>         
+                <input class="input play" id="name" type="text" value="${player.nombre}">                                               
+            </div> 
+
+            <div class="category team play">
+                <div class="teamOpt">
+                    <p class="title">CATEGORIA</p>
+                    <select class="input selector play" id="categoria">
+                        <option value="Femenil" ${discipline.categoria === 'Femenil' ? 'selected' : ''}>Femenil</option>
+                        <option value="Varonil" ${discipline.categoria === 'Varonil' ? 'selected' : ''}>Varonil</option>
+                    </select>
+                </div>           
+                            
+                <div class="teamOpt">
+                    <p class="title">EQUIPO</p>      
+                    <select class="input selector play" id="equipo">
+                        ${optionsHTML}
+                    </select>
+                </div>
+            </div>
+                
+            <div class="category team play">
+                <div class="teamOpt">
+                    <p class="title">NUMERO</p>
+                    <input class="input selector play" id="number" type="number" min="0" step="1" value="${player.numero}">
+                </div>           
+                            
+                <div class="teamOpt position">
+                    <p class="title">POSICION</p>                        
+                </div>
+            </div>   
+            
+            <div class="buttons">
+                <button class="btns play" id="modify">MODIFICAR</button> 
+                <button class="btns play" id="modPhoto">EDITAR FOTO</button> 
+                <button class="btns play" id="cancel">CANCELAR</button> 
+            </div>
+        `;
+
+        //document.getElementById('modify').addEventListener('click', );
+        //document.getElementById('modPhoto').addEventListener('click', );
+        document.getElementById('cancel').addEventListener('click', CancelPlayer);
+
+        const positionContainer = document.querySelector('.teamOpt.position');
+        if(disciplineName === 'Básquetbol') {                
+                positionContainer.innerHTML += `
+                    <select class="input selector play" id="posicion">
+                        <option value="Base" ${player.posicion === 'Base' ? 'selected' : ''}>Base</option>
+                        <option value="Escolta" ${player.posicion === 'Escolta' ? 'selected' : ''}>Escolta</option>
+                        <option value="Alero" ${player.posicion === 'Alero' ? 'selected' : ''}>Alero</option>
+                        <option value="Ala-Pívot" ${player.posicion === 'Ala-Pívot' ? 'selected' : ''}>Ala-Pívot</option>
+                        <option value="Pívot" ${player.posicion === 'Pívot' ? 'selected' : ''}>Pívot</option>
+                    </select>
+                `;
+        } else 
+            if(disciplineName === 'Voleibol') {
+                    positionContainer.innerHTML += `
+                        <select class="input selector play" id="posicion">
+                            <option value="Colocador" ${player.posicion === 'Colocador' ? 'selected' : ''}>Colocador</option>
+                            <option value="Opuesto" ${player.posicion === 'Opuesto' ? 'selected' : ''}>Opuesto</option>
+                            <option value="Central" ${player.posicion === 'Central' ? 'selected' : ''}>Central</option>
+                            <option value="Receptor-Punta" ${player.posicion === 'Receptor-Punta' ? 'selected' : ''}>Receptor-Punta</option>
+                            <option value="Libero" ${player.posicion === 'Libero' ? 'selected' : ''}>Libero</option>
+                            <option value="Defensa" ${player.posicion === 'Defensa' ? 'selected' : ''}>Defensa</option>
+                        </select>                        
+                    `;
+            } else 
+                if(disciplineName === 'Fútbol') {
+                        positionContainer.innerHTML += `
+                            <select id="posicion" class="input selector play">
+                                <option value="Portero" ${player.posicion === 'Portero' ? 'selected' : ''}>Portero</option>
+                                <option value="Defensa Central" ${player.posicion === 'Defensa Central' ? 'selected' : ''}>Defensa Central</option>
+                                <option value="Lateral Derecho" ${player.posicion === 'Lateral Derecho' ? 'selected' : ''}>Lateral Derecho</option>
+                                <option value="Lateral Izquierdo" ${player.posicion === 'Lateral Izquierdo' ? 'selected' : ''}>Lateral Izquierdo</option>
+                                <option value="Mediapunta" ${player.posicion === 'Mediapunta' ? 'selected' : ''}>Mediapunta</option>
+                                <option value="Centrocampista Defensivo" ${player.posicion === 'Centrocampista Defensivo' ? 'selected' : ''}>Centrocampista Defensivo</option>
+                                <option value="Mediocentro" ${player.posicion === 'Mediocentro' ? 'selected' : ''}>Mediocentro</option>
+                                <option value="Interior Derecho" ${player.posicion === 'Interior Derecho' ? 'selected' : ''}>Interior Derecho</option>
+                                <option value="Interior Izquierdo" ${player.posicion === 'Interior Izquierdo' ? 'selected' : ''}>Interior Izquierdo</option>
+                                <option value="Extremo Derecho" ${player.posicion === 'Extremo Derecho' ? 'selected' : ''}>Extremo Derecho</option>
+                                <option value="Extremo Izquierdo" ${player.posicion === 'Extremo Izquierdo' ? 'selected' : ''}>Extremo Izquierdo</option>
+                                <option value="Delantero Centro" ${player.posicion === 'Delantero Centro' ? 'selected' : ''}>Delantero Centro</option>
+                                <option value="Segundo Delantero" ${player.posicion === 'Segundo Delantero' ? 'selected' : ''}>Segundo Delantero</option>
+                            </select>
+                        `;
+                }                
+
+        document.getElementById('categoria').addEventListener('change', async (e) => {
             const selectedCategory = e.target.value;
             const disciplineId = await getDisciplineId(selectedCategory.toLowerCase());
-            const updatedGroups = await getGroupsByDiscID(disciplineId);
+            const updatedTeams = await getTeamsByDiscID(disciplineId);
 
-            const groupSelect = document.getElementById('groupTm');
-            groupSelect.innerHTML = updatedGroups
-                .map(group => `<option value="${group.id_grupo}">${group.nombre}</option>`)
-                .join('');
+            const optionsPromises = updatedTeams.map(async (team) => {
+                let teamName = team.nombre;
+
+                if (!teamName) {
+                    const result = await getTecCityByID(team.tecsid);
+                    teamName = result.ciudad;
+                }
+
+                return `<option value="${team.id_equipo}">${teamName}</option>`;
+            });
+            const optionsHTML = (await Promise.all(optionsPromises)).join('');
+            const teamSelect = document.getElementById('equipo');
+            teamSelect.innerHTML = optionsHTML;
         });
     } catch (error) {
         console.error('Error cargando equipo:', error);
@@ -1126,6 +1479,28 @@ async function CancelTeam() {
     } catch(error) {
         console.log('Error', error);
     }
+}
+
+async function CancelPlayer() {
+    const container = document.querySelector('.info');
+    const disciplineList = await getDisciplineByName();
+    const ids = disciplineList.map(d => d.id_diciplinas);
+    const teamsList = await getTeamsByDiscipline(ids);
+    const idsT = teamsList.map(t => t.id_equipo);
+    const players = await getPlayersByTeams(idsT);
+
+    container.innerHTML = `
+        <div class="modify">
+            <p>SELECCIONE EL JUGADOR A MODIFICAR</p>                
+            <select class="input selector m" id="playerS">
+                ${players.map(player => `<option value="${player.id_jugador}">${player.nombre}</option>`).join('')}
+            </select>
+        </div>
+
+        <button class="btns" id="select">SELECCIONAR</button> 
+    `;
+
+    document.getElementById('select').addEventListener('click', SelectPlayer);
 }
 
 async function SearchGroup() {
@@ -1637,6 +2012,17 @@ async function getTecs() {
 }
 
 // JUGADORES
+async function getPlayerByID(ID) {
+    try {
+        const players = await fetchPlayers();
+
+        return players.find(p => p.id_jugador == ID);
+    } catch(error) {
+        console.error('Error obteniendo jugadores:', error);
+        return null;
+    }
+}
+
 async function getPlayersByTeams(ids) {
     try {
         const players = await fetchPlayers();
@@ -1657,6 +2043,19 @@ async function getExistingPlayer(name, number, team) {
             p.numero == number &&
             p.equipoid == team
         );
+    } catch(error) {
+        console.error('Error obteniendo jugadores:', error);
+        return null;
+    }
+}
+
+async function getPlayerDisc(teamID) {
+    try {
+        const teams = await fetchTeams();
+        const team = teams.find(t => t.id_equipo == teamID);
+
+        const disciplines = await fetchDisciplines();
+        return disciplines.find(d => d.id_diciplinas === team.diciplinaid);
     } catch(error) {
         console.error('Error obteniendo jugadores:', error);
         return null;
@@ -1697,6 +2096,26 @@ async function createTeam(groupData) {
         return response.json();
     } catch(error) {
         console.error('Error en createTeamInDatabase:', error);
+        return { 
+            success: false, 
+            message: 'Error de conexión con el servidor' 
+        };
+    }
+}
+
+async function createPlayer(groupData) {
+    try {
+        const response = await fetch('http://localhost:3000/api/jugador', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(groupData)
+        });
+
+        return response.json();
+    } catch(error) {
+        console.error('Error en createPlayerInDatabase:', error);
         return { 
             success: false, 
             message: 'Error de conexión con el servidor' 

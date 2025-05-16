@@ -423,9 +423,9 @@ async function renderTeams(teams) {
         let rutaLogo = logo.logo;
 
         if(ciudad === 'Puruándiro')
-            rutaLogo = '/frontend/assets/images/Puruándiro.webp'
+            rutaLogo = './assets/images/Puruándiro.webp'
         else if(ciudad === 'Purhépecha')
-            rutaLogo = '/frontend/assets/images/Purhépecha.webp'
+            rutaLogo = './assets/images/Purhépecha.webp'
 
         const teamHTML = `
             <div class="sections teams">
@@ -481,7 +481,7 @@ async function updateCardWithData(sede) {
     // Link Encontrar
     const mapLink = document.createElement('a');
     mapLink.href = sede.mapa;
-    mapLink.innerHTML = '<img src="/frontend/assets/images/Location.webp" alt="Ubicacion">Encontrar';
+    mapLink.innerHTML = '<img src="./assets/images/Location.webp" alt="Ubicacion">Encontrar';
     linksContainer.appendChild(mapLink);
 
     // Link Restaurantes
@@ -492,7 +492,7 @@ async function updateCardWithData(sede) {
         if(restaurants.length > 0) {
             const restaurantLink = document.createElement('a');
             restaurantLink.href = `#`;
-            restaurantLink.innerHTML = '<img src="/frontend/assets/images/Rest.webp" alt="Restaurantes">Restaurantes Cercanos';
+            restaurantLink.innerHTML = '<img src="./assets/images/Rest.webp" alt="Restaurantes">Restaurantes Cercanos';
             
             restaurantLink.addEventListener('click', async(e) => {
                 e.preventDefault();                
@@ -564,7 +564,7 @@ async function updateCardWithData(sede) {
     if(sede.tipo === 'Hotel' || sede.tipo === 'Hospital') {
         const telephoneLink = document.createElement('a');
         telephoneLink.href = `tel:${normalizePhoneNumber(sede.telefono)}`;
-        telephoneLink.innerHTML = `<img src="/frontend/assets/images/Phone.webp" alt="Telefono">${sede.telefono}`;
+        telephoneLink.innerHTML = `<img src="./assets/images/Phone.webp" alt="Telefono">${sede.telefono}`;
         linksContainer.appendChild(telephoneLink);
     }
 }
@@ -583,19 +583,19 @@ function updateCardRestaurant(restaurant) {
     // Link Encontrar
     const mapLink = document.createElement('a');
     mapLink.href = restaurant.mapa;
-    mapLink.innerHTML = '<img src="/frontend/assets/images/Location.webp" alt="Ubicacion">Encontrar';
+    mapLink.innerHTML = '<img src="./assets/images/Location.webp" alt="Ubicacion">Encontrar';
     linksContainer.appendChild(mapLink);
 
     // Link Teléfono
     const telephoneLink = document.createElement('a');
     telephoneLink.href = `tel:${normalizePhoneNumber(restaurant.telefono)}`;
-    telephoneLink.innerHTML = `<img src="/frontend/assets/images/Phone.webp" alt="Telefono">${restaurant.telefono}`;
+    telephoneLink.innerHTML = `<img src="./assets/images/Phone.webp" alt="Telefono">${restaurant.telefono}`;
     linksContainer.appendChild(telephoneLink);
 
     // Link Horario
     const horarioLink = document.createElement('a');
     horarioLink.href = '#';
-    horarioLink.innerHTML = `<img src="/frontend/assets/images/Hour.webp" alt="Telefono">${restaurant.horarioAtencion}`;
+    horarioLink.innerHTML = `<img src="./assets/images/Hour.webp" alt="Telefono">${restaurant.horarioAtencion}`;
     horarioLink.style.cursor = 'default';
     horarioLink.style.pointerEvents = 'none';
     linksContainer.appendChild(horarioLink);
@@ -983,7 +983,7 @@ async function updatePhase(disciplinaId) {
                     const partidoHTML = `
                         <div class="wrapper">
                             <div class="infoCont">
-                                <img src="/frontend/assets/images/Info.webp" alt="Info">
+                                <img src="./assets/images/Info.webp" alt="Info">
                                 <p>DETALLES</p>
                             </div>
 

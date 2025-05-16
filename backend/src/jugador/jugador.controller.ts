@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { JugadorService } from './jugador.service';
 import { CreateJugadorDto } from './dto/create-jugador.dto';
 import { UpdateJugadorDto } from './dto/update-jugador.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { cloudinary } from '../common/cloudinary';
 
 @Controller('jugador')
 export class JugadorController {
@@ -30,5 +32,31 @@ export class JugadorController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.jugadorService.remove(+id);
+  }
+
+  @Post('foto')
+  @UseInterceptors(FileInterceptor('foto'))
+  async uploadFoto(
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    if (!file) {
+      throw new BadRequestException('Debe seleccionar una imagen');
+    }
+
+    try {
+      const result = await this.jugadorService.uploadImage(file);
+      return { 
+        success: true, 
+        url: result.url 
+      };
+    } catch (error) {
+      console.error('Error detallado:', error);
+      throw new InternalServerErrorException('Error al subir la imagen');
+    }
+  }
+
+  @Get('foto')
+  async getFotos() {
+    return this.jugadorService.getFotos();
   }
 }
