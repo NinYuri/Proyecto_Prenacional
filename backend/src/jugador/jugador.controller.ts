@@ -33,30 +33,4 @@ export class JugadorController {
   remove(@Param('id') id: string) {
     return this.jugadorService.remove(+id);
   }
-
-  @Post('foto')
-  @UseInterceptors(FileInterceptor('foto'))
-  async uploadFoto(
-    @UploadedFile() file: Express.Multer.File
-  ) {
-    if (!file) {
-      throw new BadRequestException('Debe seleccionar una imagen');
-    }
-
-    try {
-      const result = await this.jugadorService.uploadImage(file);
-      return { 
-        success: true, 
-        url: result.url 
-      };
-    } catch (error) {
-      console.error('Error detallado:', error);
-      throw new InternalServerErrorException('Error al subir la imagen');
-    }
-  }
-
-  @Get('foto')
-  async getFotos() {
-    return this.jugadorService.getFotos();
-  }
 }
